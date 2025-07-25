@@ -1,8 +1,6 @@
 package internal
 
 type ServerHello struct {
-	HandshakeType     []byte
-	Length            []byte
 	Version           []byte
 	Random            []byte
 	SessionIDLength   []byte
@@ -21,34 +19,33 @@ type TLSExtensions struct {
 
 /**
  * TODO: 仮にサーバー側の送信するバイト列が誤っていた場合にクライアントはどう検知するのか調べる
+ * TODO: SessionIDのLengthに応じてoffsetを付ける必要があるが、ここでは一旦32バイトとして処理を進める
  */
 func ParseServerHello(packet []byte) (ServerHello, error) {
 	serverHello := ServerHello{
-		HandshakeType:     packet[0:1],
-		Length:            packet[1:4],
-		Version:           packet[4:6],
-		Random:            packet[6:38],
-		SessionIDLength:   packet[38:39],
-		SessionID:         packet[39:71],
-		CipherSuite:       packet[71:73],
-		CompressionMethod: packet[73:74],
-		ExtensionLength:   packet[74:76],
+		Version:           packet[0:2],
+		Random:            packet[2:34],
+		SessionIDLength:   packet[34:35],
+		SessionID:         packet[35:67],
+		CipherSuite:       packet[67:69],
+		CompressionMethod: packet[69:70],
+		ExtensionLength:   packet[70:72],
 	}
 	// supported_versions
 	serverHello.TLSExtensions = append(serverHello.TLSExtensions, TLSExtensions{
-		Type:   packet[76:78],
-		Length: packet[78:80],
-		Value:  packet[80:82],
+		Type:   packet[72:74],
+		Length: packet[74:76],
+		Value:  packet[76:78],
 	})
 
 	//key_share
 	serverHello.TLSExtensions = append(serverHello.TLSExtensions, TLSExtensions{
-		Type:   packet[82:84],
-		Length: packet[84:86],
+		Type:   packet[78:80],
+		Length: packet[80:82],
 		Value: map[string]interface{}{
-			"Group":             packet[86:88],
-			"KeyExchangeLength": packet[88:90],
-			"KeyExchange":       packet[90:122],
+			"Group":             packet[82:84],
+			"KeyExchangeLength": packet[84:86],
+			"KeyExchange":       packet[86:],
 		},
 	})
 
