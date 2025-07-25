@@ -49,11 +49,9 @@ func ToClientByteArr(clienthello ClientHello) []byte {
 	arr = append(arr, clienthello.Random[:]...)
 	arr = append(arr, clienthello.LegacySessionID[:]...)
 
-	// スライスはそのまま append
 	arr = append(arr, clienthello.CipherSuites...)
 	arr = append(arr, clienthello.LegacyCompressionMethods...)
 
-	// Extensions も連結したい場合は以下を追加
 	arr = append(arr, clienthello.Extensions...)
 	return arr
 }
