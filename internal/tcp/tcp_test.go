@@ -3,12 +3,12 @@ package tcp_test
 import (
 	"testing"
 
-	"github.com/taisei-32/TLS/internal"
+	"github.com/taisei-32/TLS/internal/tcp"
 )
 
 func TestConn(t *testing.T) {
 	t.Run("example.comへtcp接続を行う", func(t *testing.T) {
-		conn, err := internal.Conn("example.com:80")
+		conn, err := tcp.Conn("example.com:80")
 		if err != nil {
 			t.Fatalf("failed to connect: %v", err)
 		}

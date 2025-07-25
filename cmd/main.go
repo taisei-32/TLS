@@ -5,11 +5,11 @@ import (
 
 	"github.com/taisei-32/TLS/internal"
 	"github.com/taisei-32/TLS/internal/tcp"
-	"github.com/taisei-32/TLS/internal/util"
 )
 
 func main() {
-	conn, err := tcp.Conn("portfolio.malsuke.dev:443")
+	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
+	conn, err := tcp.Conn("www.itotai.com:443")
 	fmt.Println("Connecting to example.com:443")
 
 	if err != nil {
@@ -17,7 +17,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	clientHello := util.ToByteArr(internal.ClientHelloFactory())
+	clientHello := internal.ToClientByteArr(internal.ClientHelloFactory())
 
 	fmt.Println("ClientHello:", clientHello)
 
