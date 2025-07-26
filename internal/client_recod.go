@@ -17,8 +17,8 @@ type HandshakeClientHello struct {
 	clientHello   []byte
 }
 
-func ClientHandshakeFactory() HandshakeClientHello {
-	clinetHello := ToClientByteArr(ClientHelloFactory())
+func ClientHandshakeFactory(servername string) HandshakeClientHello {
+	clinetHello := ToClientByteArr(ClientHelloFactory(servername))
 
 	return HandshakeClientHello{
 		HandshakeType: []byte{0x01},
@@ -27,8 +27,8 @@ func ClientHandshakeFactory() HandshakeClientHello {
 	}
 }
 
-func ClientHelloRecordFactory() RecordClientHello {
-	handshakeclient := ToClientHandshakeByteArr(ClientHandshakeFactory())
+func ClientHelloRecordFactory(servername string) RecordClientHello {
+	handshakeclient := ToClientHandshakeByteArr(ClientHandshakeFactory(servername))
 
 	return RecordClientHello{
 		ContentType:   []byte{0x16},

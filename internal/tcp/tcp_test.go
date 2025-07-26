@@ -8,7 +8,9 @@ import (
 
 func TestConn(t *testing.T) {
 	t.Run("example.comへtcp接続を行う", func(t *testing.T) {
-		conn, err := tcp.Conn("example.com:80")
+		servername := "www.example.com"
+		url := servername + ":443"
+		conn, err := tcp.Conn(url)
 		if err != nil {
 			t.Fatalf("failed to connect: %v", err)
 		}

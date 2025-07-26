@@ -19,13 +19,13 @@ type ClientHello struct {
 // 	ExtensionTypeData []byte
 // }
 
-func ClientHelloFactory() ClientHello {
+func ClientHelloFactory(servername string) ClientHello {
 	_, public, err := util.GenEcdhX25519()
 	if err != nil {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
 
-	ExtensionsData := ToClientExtensionByteArr(ClientHelloExtensionFactory(public.Bytes()))
+	ExtensionsData := ToClientExtensionByteArr(ClientHelloExtensionFactory(public.Bytes(), servername))
 
 	return ClientHello{
 		LegacyVersion:            [2]byte{0x03, 0x03}, // TLS 1.3

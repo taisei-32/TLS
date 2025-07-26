@@ -1,15 +1,8 @@
 package internal
 
-import "github.com/taisei-32/TLS/internal/util"
-
-// type ExtensionStrunct struct {
-// 	ServerName          []byte
-// 	SupportedGroups     []byte
-// 	SignatureAlgorithms []byte
-// 	SupportedVersions   []byte
-// 	PskKeyExchangeModes []byte
-// 	KeyShare            []byte
-// }
+import (
+	"github.com/taisei-32/TLS/internal/util"
+)
 
 type ClinetHelloExtension struct {
 	ServerNameType              []byte
@@ -38,7 +31,50 @@ type Keyshare struct {
 	KeyXGroupData   []byte
 }
 
-func ClientHelloExtensionFactory(publickey []byte) ClinetHelloExtension {
+func ClientHelloExtensionFactory(publickey []byte, servername string) ClinetHelloExtension {
+	servernameData := []byte(servername)
+	servernameLength := util.Uint16ToBytes(uint16(len(servernameData)))
+
+	serverNameEntry := []byte{0x00}
+	serverNameEntry = append(serverNameEntry, servernameLength...)
+	serverNameEntry = append(serverNameEntry, servernameData...)
+
+	serverNameListLength := util.Uint16ToBytes(uint16(len(serverNameEntry)))
+	serverNameData := append(serverNameListLength, serverNameEntry...)
+
+	serverNameType := []byte{0x00, 0x00}
+	serverNameLength := util.Uint16ToBytes(uint16(len(serverNameData)))
+
+	supportedGroupsList := []byte{
+		0x00, 0x1d,
+	}
+	supportedGroupsListLength := util.Uint16ToBytes(uint16(len(supportedGroupsList)))
+	supportedGroupsData := append(supportedGroupsListLength, supportedGroupsList...)
+
+	supportedGroupsType := []byte{0x00, 0x0a}
+	supportedGroupsLength := util.Uint16ToBytes(uint16(len(supportedGroupsData)))
+
+	signatureSchemes := []byte{
+		0x04, 0x01,
+		0x04, 0x03,
+		0x08, 0x04,
+		0x08, 0x07,
+	}
+	signatureSchemesLength := util.Uint16ToBytes(uint16(len(signatureSchemes)))
+	signatureAlgorithmsData := append(signatureSchemesLength, signatureSchemes...)
+
+	signatureAlgorithmType := []byte{0x00, 0x0d}
+	signatureAlgorithmsLength := util.Uint16ToBytes(uint16(len(signatureAlgorithmsData)))
+
+	supportedVersions := []byte{0x03, 0x04}
+	supportedVersionsList := append([]byte{byte(len(supportedVersions))}, supportedVersions...)
+	supportedVersionsType := []byte{0x00, 0x2b}
+	supportedVersionsTypeLength := util.Uint16ToBytes(uint16(len(supportedVersionsList)))
+
+	pskKeyExchangeModesData := []byte{0x01, 0x01}
+	pskKeyExchangeModesType := []byte{0x00, 0x2d}
+	pskKeyExchangeModesLength := util.Uint16ToBytes(uint16(len(pskKeyExchangeModesData)))
+
 	keyshare := Keyshare{
 		KeyXGroup:     []byte{0x00, 0x1d},
 		KeyXGroupData: publickey,
@@ -51,40 +87,59 @@ func ClientHelloExtensionFactory(publickey []byte) ClinetHelloExtension {
 	keyshareEntry = append(keyshareEntry, keyshare.KeyXGroupData...)
 
 	keyshareListLen := util.Uint16ToBytes(uint16(len(keyshareEntry)))
-	keyshareData := []byte{}
-	keyshareData = append(keyshareData, keyshareListLen...)
-	keyshareData = append(keyshareData, keyshareEntry...)
+	keyshareData := append(keyshareListLen, keyshareEntry...)
 
 	keyshareType := []byte{0x00, 0x33}
 	keyshareTypeLength := util.Uint16ToBytes(uint16(len(keyshareData)))
 
-	supportedVersions := []byte{0x03, 0x04}
-	supportedVersionsList := append([]byte{byte(len(supportedVersions))}, supportedVersions...)
-
-	supportedVersionsType := []byte{0x00, 0x2b}
-	supportedVersionsTypeLength := util.Uint16ToBytes(uint16(len(supportedVersionsList)))
-
 	return ClinetHelloExtension{
-		KeyshareType:                keyshareType,
-		KeyshareTypeLength:          keyshareTypeLength,
-		KeyshareTypeData:            keyshareData,
+		ServerNameType:              serverNameType,
+		ServerNameLength:            serverNameLength,
+		ServerNameData:              serverNameData,
+		SupportedGroupsType:         supportedGroupsType,
+		SupportedGroupsLength:       supportedGroupsLength,
+		SupportedGroupsData:         supportedGroupsData,
+		SignatureAlgorithmsType:     signatureAlgorithmType,
+		SignatureAlgorithmsLength:   signatureAlgorithmsLength,
+		SignatureAlgorithmsData:     signatureAlgorithmsData,
 		SupportedVersionsType:       supportedVersionsType,
 		SupportedVersionsTypeLenght: supportedVersionsTypeLength,
 		SupportedVersionsTypeData:   supportedVersionsList,
+		PskKeyExchangeModesType:     pskKeyExchangeModesType,
+		PskKeyExchangeModesLength:   pskKeyExchangeModesLength,
+		PskKeyExchangeModesData:     pskKeyExchangeModesData,
+		KeyshareType:                keyshareType,
+		KeyshareTypeLength:          keyshareTypeLength,
+		KeyshareTypeData:            keyshareData,
 	}
 }
 
 func ToClientExtensionByteArr(ext ClinetHelloExtension) []byte {
 	var arr []byte
 
+	arr = append(arr, ext.ServerNameType...)
+	arr = append(arr, ext.ServerNameLength...)
+	arr = append(arr, ext.ServerNameData...)
+
+	arr = append(arr, ext.SupportedGroupsType...)
+	arr = append(arr, ext.SupportedGroupsLength...)
+	arr = append(arr, ext.SupportedGroupsData...)
+
+	arr = append(arr, ext.SignatureAlgorithmsType...)
+	arr = append(arr, ext.SignatureAlgorithmsLength...)
+	arr = append(arr, ext.SignatureAlgorithmsData...)
+
 	arr = append(arr, ext.SupportedVersionsType...)
 	arr = append(arr, ext.SupportedVersionsTypeLenght...)
 	arr = append(arr, ext.SupportedVersionsTypeData...)
+
+	arr = append(arr, ext.PskKeyExchangeModesType...)
+	arr = append(arr, ext.PskKeyExchangeModesLength...)
+	arr = append(arr, ext.PskKeyExchangeModesData...)
+
 	arr = append(arr, ext.KeyshareType...)
 	arr = append(arr, ext.KeyshareTypeLength...)
 	arr = append(arr, ext.KeyshareTypeData...)
-
-	// fmt.Println("ToClientExtension: ", arr)
 
 	return arr
 }
