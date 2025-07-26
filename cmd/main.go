@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	conn, err := tcp.Conn("www.itotai.com:443")
+	conn, err := tcp.Conn("example.com:443")
 	fmt.Println("Connecting to example.com:443")
 
 	if err != nil {
@@ -17,7 +17,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	clientHello := internal.ToClientByteArr(internal.ClientHelloFactory())
+	clientHello := internal.ToClientRecordByteArr(internal.ClientHelloRecordFactory())
 
 	fmt.Println("ClientHello:", clientHello)
 
