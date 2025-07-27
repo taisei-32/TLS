@@ -4,6 +4,151 @@ import (
 	"github.com/taisei-32/TLS/internal/util"
 )
 
+// 修正
+type ClientHelloExtensionType struct {
+	ServerName          []byte
+	SupportedGroup      []byte
+	SignatureAlgorithms []byte
+	SupportedVersions   []byte
+	PskKeyExchangeModes []byte
+	KeyShare            []byte
+}
+
+// server_name
+// ├─ 拡張タイプ
+// ├─ 拡張全体の長さ
+// └─ 拡張データ
+//
+//	├─ Server Name List Length
+//	└─ Server Name List
+//	   └─ [エントリ1]
+//	      ├─ Name Type
+//	      ├─ Name Length
+//	      └─ Server Name
+type ServerName struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type ServerNameExtensionData struct {
+	ListLength []byte
+	List       []byte
+}
+
+type ServerNameList struct {
+	NameType   []byte
+	NameLength []byte
+	Name       []byte
+}
+
+// supported_group
+// ├─ 拡張タイプ
+// ├─ 拡張全体の長さ
+// └─ 拡張データ
+//    ├─ Supported Versions List Length
+//    └─ Supported Versions List
+//       ├─ Version 1
+//       └─ Version 2
+
+type SupportedGroup struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type SupportedGroupExtensionData struct {
+	ListLength []byte
+	List       []byte
+}
+
+// signature_algorithms
+// ├─ 拡張タイプ
+// ├─ 拡張全体の長さ
+// └─ 拡張データ
+//    ├─ Signature Algorithms List Length
+//    └─ Signature Algorithms List
+//       ├─ Signature Scheme 1
+//       ├─ Signature Scheme 2
+
+type SignatureAlgorithms struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type SignatureAlgorithmsExtensionData struct {
+	ListLength []byte
+	List       []byte
+}
+
+// supported_version
+// ├─ 拡張タイプ
+// ├─ 拡張全体の長さ
+// └─ 拡張データ
+//    ├─ Supported Versions List Length
+//    └─ Supported Versions List
+//       ├─ Version 1
+//       ├─ Version 2
+
+type SupportedVersion struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type SupportedVersionExtensionData struct {
+	ListLength []byte
+	List       []byte
+}
+
+// psk_key_exchange_moded
+// ├─ 拡張タイプ
+// ├─ 拡張全体の長さ
+// └─ 拡張データ
+//    ├─ KE Modes List Length
+//    └─ KE Modes List
+//       └─ KE Mode
+
+type PskKeyExchangeModes struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type PskKeyExchangeModesExtensionData struct {
+	ListLength []byte
+	List       []byte
+}
+
+// key_share
+// ├─ 拡張タイプ
+// ├─ 拡張全体の長さ
+// └─ 拡張データ
+//    ├─ Client Key Share List Length
+//    └─ Client Key Share List
+//       └─ [Key Share Entry 1]
+//          ├─ Named Group
+//          ├─ Key Exchange Length
+//          └─ Key Exchange
+
+type KeyShare struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type KeyShareExtensionData struct {
+	ListLength []byte
+	List       []byte
+}
+
+type KeyShareList struct {
+	NamedGroup        []byte
+	KeyExchangeLength []byte
+	KeyExchange       []byte
+}
+
 type ClinetHelloExtension struct {
 	ServerNameType              []byte
 	ServerNameLength            []byte
