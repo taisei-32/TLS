@@ -25,7 +25,7 @@ func ClientHelloFactory(servername string) ClientHello {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
 
-	ExtensionsData := ToClientExtensionByteArr(ClientHelloExtensionFactory(public.Bytes(), servername))
+	ExtensionsData := ToClientHelloExtensionTypeByteArr(ClientHelloExtensionFactory1(public.Bytes(), servername))
 
 	return ClientHello{
 		LegacyVersion:            [2]byte{0x03, 0x03}, // TLS 1.3

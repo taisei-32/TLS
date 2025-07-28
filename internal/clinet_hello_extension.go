@@ -4,7 +4,6 @@ import (
 	"github.com/taisei-32/TLS/internal/util"
 )
 
-// 修正
 type ClientHelloExtensionType struct {
 	ServerName          []byte
 	SupportedGroup      []byte
@@ -12,6 +11,17 @@ type ClientHelloExtensionType struct {
 	SupportedVersions   []byte
 	PskKeyExchangeModes []byte
 	KeyShare            []byte
+}
+
+type Extension struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type ExtensionData struct {
+	ListLength []byte
+	List       []byte
 }
 
 // server_name
@@ -116,11 +126,6 @@ type PskKeyExchangeModes struct {
 	ExtensionData   []byte
 }
 
-type PskKeyExchangeModesExtensionData struct {
-	ListLength []byte
-	List       []byte
-}
-
 // key_share
 // ├─ 拡張タイプ
 // ├─ 拡張全体の長さ
@@ -149,142 +154,293 @@ type KeyShareList struct {
 	KeyExchange       []byte
 }
 
-type ClinetHelloExtension struct {
-	ServerNameType              []byte
-	ServerNameLength            []byte
-	ServerNameData              []byte
-	SupportedGroupsType         []byte
-	SupportedGroupsLength       []byte
-	SupportedGroupsData         []byte
-	SignatureAlgorithmsType     []byte
-	SignatureAlgorithmsLength   []byte
-	SignatureAlgorithmsData     []byte
-	SupportedVersionsType       []byte
-	SupportedVersionsTypeLenght []byte
-	SupportedVersionsTypeData   []byte
-	PskKeyExchangeModesType     []byte
-	PskKeyExchangeModesLength   []byte
-	PskKeyExchangeModesData     []byte
-	KeyshareType                []byte
-	KeyshareTypeLength          []byte
-	KeyshareTypeData            []byte
-}
+func ClientHelloExtensionFactory1(publickey []byte, servername string) ClientHelloExtensionType {
+	ServerNameData := ToServerNameByteArr(ServerNameFactory(servername))
+	SupportedGroupData := ToSuportedGroupByteArr(SupportedGroupFactory())
+	SignatureAlgorithmData := ToSingnatureAlgorithmsByteArr(SignatureAlgorithmsFactory())
+	SupportedVersionsData := ToSupportedVersionsByteArr(SupportedVersionsFactory())
+	PskKeyExchangeModesData := ToPskKeyExchangeModesByteArr(PskKeyExchangeModesFactory())
+	KeyShareData := ToKeyShareByteArr(KeyShareFactory(publickey))
 
-type Keyshare struct {
-	KeyXGroup       []byte
-	KeyXGroupLength []byte
-	KeyXGroupData   []byte
-}
-
-func ClientHelloExtensionFactory(publickey []byte, servername string) ClinetHelloExtension {
-	servernameData := []byte(servername)
-	servernameLength := util.Uint16ToBytes(uint16(len(servernameData)))
-
-	serverNameEntry := []byte{0x00}
-	serverNameEntry = append(serverNameEntry, servernameLength...)
-	serverNameEntry = append(serverNameEntry, servernameData...)
-
-	serverNameListLength := util.Uint16ToBytes(uint16(len(serverNameEntry)))
-	serverNameData := append(serverNameListLength, serverNameEntry...)
-
-	serverNameType := []byte{0x00, 0x00}
-	serverNameLength := util.Uint16ToBytes(uint16(len(serverNameData)))
-
-	supportedGroupsList := []byte{
-		0x00, 0x1d,
+	return ClientHelloExtensionType{
+		ServerName:          ServerNameData,
+		SupportedGroup:      SupportedGroupData,
+		SignatureAlgorithms: SignatureAlgorithmData,
+		SupportedVersions:   SupportedVersionsData,
+		PskKeyExchangeModes: PskKeyExchangeModesData,
+		KeyShare:            KeyShareData,
 	}
-	supportedGroupsListLength := util.Uint16ToBytes(uint16(len(supportedGroupsList)))
-	supportedGroupsData := append(supportedGroupsListLength, supportedGroupsList...)
+}
 
-	supportedGroupsType := []byte{0x00, 0x0a}
-	supportedGroupsLength := util.Uint16ToBytes(uint16(len(supportedGroupsData)))
+func ServerNameFactory(servername string) ServerName {
+	ServerNameExtensionData := ToServerNameExtensionByteArr(ServerNameExtensionDataFactory(servername))
+	return ServerName{
+		ExtensionType:   []byte{0x00, 0x00},
+		ExtensionLength: util.Uint16ToBytes(uint16(len(ServerNameExtensionData))),
+		ExtensionData:   ServerNameExtensionData,
+	}
+}
 
-	signatureSchemes := []byte{
+func ServerNameExtensionDataFactory(servername string) ServerNameExtensionData {
+	ServerNameData := ToServerNameListByteArr(ServerNameListFactory(servername))
+	return ServerNameExtensionData{
+		ListLength: util.Uint16ToBytes(uint16(len(ServerNameData))),
+		List:       ServerNameData,
+	}
+}
+
+func ServerNameListFactory(servername string) ServerNameList {
+	return ServerNameList{
+		NameType:   []byte{0x00},
+		NameLength: util.Uint16ToBytes(uint16(len(servername))),
+		Name:       []byte(servername),
+	}
+}
+
+func SupportedGroupFactory() SupportedGroup {
+	SupportedGroupExtensionData := ToSupportedGroupExtensionDataByteArr(SupportedGroupExtensionDataFactory())
+	return SupportedGroup{
+		ExtensionType:   []byte{0x00, 0x0a},
+		ExtensionLength: util.Uint16ToBytes(uint16(len(SupportedGroupExtensionData))),
+		ExtensionData:   SupportedGroupExtensionData,
+	}
+}
+
+func SupportedGroupExtensionDataFactory() SupportedGroupExtensionData {
+	supportedGroupListData := []byte{0x00, 0x1d}
+	return SupportedGroupExtensionData{
+		ListLength: util.Uint16ToBytes(uint16(len(supportedGroupListData))),
+		List:       supportedGroupListData,
+	}
+}
+
+func SignatureAlgorithmsFactory() SignatureAlgorithms {
+	SignatureAlgorithmsExtensionData := ToSignatureAlgorithmsExtensionDataByteArr(SignatureAlgorithmsExtensionDataFactory())
+	return SignatureAlgorithms{
+		ExtensionType:   []byte{0x00, 0x0d},
+		ExtensionLength: util.Uint16ToBytes(uint16(len(SignatureAlgorithmsExtensionData))),
+		ExtensionData:   SignatureAlgorithmsExtensionData,
+	}
+}
+
+func SignatureAlgorithmsExtensionDataFactory() SignatureAlgorithmsExtensionData {
+	SignatureAlgorithmsList := []byte{
 		0x04, 0x01,
 		0x04, 0x03,
 		0x08, 0x04,
 		0x08, 0x07,
 	}
-	signatureSchemesLength := util.Uint16ToBytes(uint16(len(signatureSchemes)))
-	signatureAlgorithmsData := append(signatureSchemesLength, signatureSchemes...)
 
-	signatureAlgorithmType := []byte{0x00, 0x0d}
-	signatureAlgorithmsLength := util.Uint16ToBytes(uint16(len(signatureAlgorithmsData)))
-
-	supportedVersions := []byte{0x03, 0x04}
-	supportedVersionsList := append([]byte{byte(len(supportedVersions))}, supportedVersions...)
-	supportedVersionsType := []byte{0x00, 0x2b}
-	supportedVersionsTypeLength := util.Uint16ToBytes(uint16(len(supportedVersionsList)))
-
-	pskKeyExchangeModesData := []byte{0x01, 0x01}
-	pskKeyExchangeModesType := []byte{0x00, 0x2d}
-	pskKeyExchangeModesLength := util.Uint16ToBytes(uint16(len(pskKeyExchangeModesData)))
-
-	keyshare := Keyshare{
-		KeyXGroup:     []byte{0x00, 0x1d},
-		KeyXGroupData: publickey,
-	}
-	keyshare.KeyXGroupLength = util.Uint16ToBytes(uint16(len(keyshare.KeyXGroupData)))
-
-	keyshareEntry := []byte{}
-	keyshareEntry = append(keyshareEntry, keyshare.KeyXGroup...)
-	keyshareEntry = append(keyshareEntry, keyshare.KeyXGroupLength...)
-	keyshareEntry = append(keyshareEntry, keyshare.KeyXGroupData...)
-
-	keyshareListLen := util.Uint16ToBytes(uint16(len(keyshareEntry)))
-	keyshareData := append(keyshareListLen, keyshareEntry...)
-
-	keyshareType := []byte{0x00, 0x33}
-	keyshareTypeLength := util.Uint16ToBytes(uint16(len(keyshareData)))
-
-	return ClinetHelloExtension{
-		ServerNameType:              serverNameType,
-		ServerNameLength:            serverNameLength,
-		ServerNameData:              serverNameData,
-		SupportedGroupsType:         supportedGroupsType,
-		SupportedGroupsLength:       supportedGroupsLength,
-		SupportedGroupsData:         supportedGroupsData,
-		SignatureAlgorithmsType:     signatureAlgorithmType,
-		SignatureAlgorithmsLength:   signatureAlgorithmsLength,
-		SignatureAlgorithmsData:     signatureAlgorithmsData,
-		SupportedVersionsType:       supportedVersionsType,
-		SupportedVersionsTypeLenght: supportedVersionsTypeLength,
-		SupportedVersionsTypeData:   supportedVersionsList,
-		PskKeyExchangeModesType:     pskKeyExchangeModesType,
-		PskKeyExchangeModesLength:   pskKeyExchangeModesLength,
-		PskKeyExchangeModesData:     pskKeyExchangeModesData,
-		KeyshareType:                keyshareType,
-		KeyshareTypeLength:          keyshareTypeLength,
-		KeyshareTypeData:            keyshareData,
+	return SignatureAlgorithmsExtensionData{
+		ListLength: util.Uint16ToBytes(uint16(len(SignatureAlgorithmsList))),
+		List:       SignatureAlgorithmsList,
 	}
 }
 
-func ToClientExtensionByteArr(ext ClinetHelloExtension) []byte {
+func SupportedVersionsFactory() SupportedVersion {
+	SupportedVersionsExtensionData := ToSupportedVersionExtensionDataByteArr(SupportedVersionExtensionDataFactory())
+	return SupportedVersion{
+		ExtensionType:   []byte{0x00, 0x2b},
+		ExtensionLength: util.Uint16ToBytes(uint16(len(SupportedVersionsExtensionData))),
+		ExtensionData:   SupportedVersionsExtensionData,
+	}
+}
+
+func SupportedVersionExtensionDataFactory() SupportedVersionExtensionData {
+	supportedVersionsData := []byte{0x03, 0x04}
+	return SupportedVersionExtensionData{
+		ListLength: []byte{byte(len(supportedVersionsData))},
+		List:       supportedVersionsData,
+	}
+}
+
+func PskKeyExchangeModesFactory() PskKeyExchangeModes {
+	ListData := []byte{0x01, 0x01}
+	return PskKeyExchangeModes{
+		ExtensionType:   []byte{0x00, 0x2d},
+		ExtensionLength: util.Uint16ToBytes(uint16(len(ListData))),
+		ExtensionData:   ListData,
+	}
+}
+
+func KeyShareFactory(publickey []byte) KeyShare {
+	KeyShareData := ToKeyShareExtensionDataByteArr(KeyShareExtensionFactory(publickey))
+	return KeyShare{
+		ExtensionType:   []byte{0x00, 0x33},
+		ExtensionLength: util.Uint16ToBytes(uint16(len(KeyShareData))),
+		ExtensionData:   KeyShareData,
+	}
+}
+
+func KeyShareExtensionFactory(publickey []byte) KeyShareExtensionData {
+	KeyX25519 := ToKeyShareListByteArr(KeyShareListFactory(publickey, 0x001D))
+	return KeyShareExtensionData{
+		ListLength: util.Uint16ToBytes(uint16(len(KeyX25519))),
+		List:       KeyX25519,
+	}
+}
+
+func KeyShareListFactory(publickey []byte, number int16) KeyShareList {
+	return KeyShareList{
+		NamedGroup:        util.Uint16ToBytes(uint16(number)),
+		KeyExchangeLength: util.Uint16ToBytes(uint16(len(publickey))),
+		KeyExchange:       publickey,
+	}
+}
+
+func ToExtensionByteArr(ext Extension) []byte {
 	var arr []byte
 
-	arr = append(arr, ext.ServerNameType...)
-	arr = append(arr, ext.ServerNameLength...)
-	arr = append(arr, ext.ServerNameData...)
+	arr = append(arr, ext.ExtensionType...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, ext.ExtensionData...)
 
-	arr = append(arr, ext.SupportedGroupsType...)
-	arr = append(arr, ext.SupportedGroupsLength...)
-	arr = append(arr, ext.SupportedGroupsData...)
+	return arr
+}
 
-	arr = append(arr, ext.SignatureAlgorithmsType...)
-	arr = append(arr, ext.SignatureAlgorithmsLength...)
-	arr = append(arr, ext.SignatureAlgorithmsData...)
+func ToExtensionDataByteArr(ext ExtensionData) []byte {
+	var arr []byte
 
-	arr = append(arr, ext.SupportedVersionsType...)
-	arr = append(arr, ext.SupportedVersionsTypeLenght...)
-	arr = append(arr, ext.SupportedVersionsTypeData...)
+	arr = append(arr, ext.ListLength...)
+	arr = append(arr, ext.List...)
 
-	arr = append(arr, ext.PskKeyExchangeModesType...)
-	arr = append(arr, ext.PskKeyExchangeModesLength...)
-	arr = append(arr, ext.PskKeyExchangeModesData...)
+	return arr
+}
 
-	arr = append(arr, ext.KeyshareType...)
-	arr = append(arr, ext.KeyshareTypeLength...)
-	arr = append(arr, ext.KeyshareTypeData...)
+func ToServerNameByteArr(ext ServerName) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ExtensionType...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, ext.ExtensionData...)
+
+	return arr
+}
+
+func ToServerNameExtensionByteArr(ext ServerNameExtensionData) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ListLength...)
+	arr = append(arr, ext.List...)
+
+	return arr
+}
+
+func ToServerNameListByteArr(ext ServerNameList) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.NameType...)
+	arr = append(arr, ext.NameLength...)
+	arr = append(arr, ext.Name...)
+
+	return arr
+}
+
+func ToSuportedGroupByteArr(ext SupportedGroup) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ExtensionType...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, ext.ExtensionData...)
+
+	return arr
+}
+
+func ToSupportedGroupExtensionDataByteArr(ext SupportedGroupExtensionData) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ListLength...)
+	arr = append(arr, ext.List...)
+
+	return arr
+}
+
+func ToSingnatureAlgorithmsByteArr(ext SignatureAlgorithms) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ExtensionType...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, ext.ExtensionData...)
+
+	return arr
+}
+
+func ToSignatureAlgorithmsExtensionDataByteArr(ext SignatureAlgorithmsExtensionData) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ListLength...)
+	arr = append(arr, ext.List...)
+
+	return arr
+}
+
+func ToSupportedVersionsByteArr(ext SupportedVersion) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ExtensionType...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, ext.ExtensionData...)
+
+	return arr
+}
+
+func ToSupportedVersionExtensionDataByteArr(ext SupportedVersionExtensionData) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ListLength...)
+	arr = append(arr, ext.List...)
+
+	return arr
+}
+
+func ToPskKeyExchangeModesByteArr(ext PskKeyExchangeModes) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ExtensionType...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, ext.ExtensionData...)
+
+	return arr
+}
+
+func ToKeyShareByteArr(ext KeyShare) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ExtensionType...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, ext.ExtensionData...)
+
+	return arr
+}
+
+func ToKeyShareExtensionDataByteArr(ext KeyShareExtensionData) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ListLength...)
+	arr = append(arr, ext.List...)
+
+	return arr
+}
+
+func ToKeyShareListByteArr(ext KeyShareList) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.NamedGroup...)
+	arr = append(arr, ext.KeyExchangeLength...)
+	arr = append(arr, ext.KeyExchange...)
+
+	return arr
+}
+
+func ToClientHelloExtensionTypeByteArr(ext ClientHelloExtensionType) []byte {
+	var arr []byte
+
+	arr = append(arr, ext.ServerName...)
+	arr = append(arr, ext.SupportedGroup...)
+	arr = append(arr, ext.SignatureAlgorithms...)
+	arr = append(arr, ext.SupportedVersions...)
+	arr = append(arr, ext.PskKeyExchangeModes...)
+	arr = append(arr, ext.KeyShare...)
 
 	return arr
 }
