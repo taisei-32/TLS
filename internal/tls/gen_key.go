@@ -1,4 +1,4 @@
-package util
+package tls
 
 import (
 	"crypto/ecdh"
@@ -13,4 +13,12 @@ func GenEcdhX25519() (*ecdh.PrivateKey, *ecdh.PublicKey, error) {
 	}
 	pub := priv.PublicKey()
 	return priv, pub, nil
+}
+
+func GenerateSharedSecret(priv *ecdh.PrivateKey, pub *ecdh.PublicKey) ([]byte, error) {
+	sharedSecret, err := priv.ECDH(pub)
+	if err != nil {
+		return nil, err
+	}
+	return sharedSecret, nil
 }

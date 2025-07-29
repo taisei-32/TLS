@@ -1,8 +1,4 @@
-package internal
-
-import (
-	"github.com/taisei-32/TLS/internal/util"
-)
+package tls
 
 type ClientHelloExtensionType struct {
 	ServerName          []byte
@@ -13,6 +9,7 @@ type ClientHelloExtensionType struct {
 	KeyShare            []byte
 }
 
+// ここはもっといいやり方があるはず
 type Extension struct {
 	ExtensionType   []byte
 	ExtensionLength []byte
@@ -176,7 +173,7 @@ func ServerNameFactory(servername string) ServerName {
 	ServerNameExtensionData := ToServerNameExtensionByteArr(ServerNameExtensionDataFactory(servername))
 	return ServerName{
 		ExtensionType:   []byte{0x00, 0x00},
-		ExtensionLength: util.Uint16ToBytes(uint16(len(ServerNameExtensionData))),
+		ExtensionLength: Uint16ToBytes(uint16(len(ServerNameExtensionData))),
 		ExtensionData:   ServerNameExtensionData,
 	}
 }
@@ -184,7 +181,7 @@ func ServerNameFactory(servername string) ServerName {
 func ServerNameExtensionDataFactory(servername string) ServerNameExtensionData {
 	ServerNameData := ToServerNameListByteArr(ServerNameListFactory(servername))
 	return ServerNameExtensionData{
-		ListLength: util.Uint16ToBytes(uint16(len(ServerNameData))),
+		ListLength: Uint16ToBytes(uint16(len(ServerNameData))),
 		List:       ServerNameData,
 	}
 }
@@ -192,7 +189,7 @@ func ServerNameExtensionDataFactory(servername string) ServerNameExtensionData {
 func ServerNameListFactory(servername string) ServerNameList {
 	return ServerNameList{
 		NameType:   []byte{0x00},
-		NameLength: util.Uint16ToBytes(uint16(len(servername))),
+		NameLength: Uint16ToBytes(uint16(len(servername))),
 		Name:       []byte(servername),
 	}
 }
@@ -201,7 +198,7 @@ func SupportedGroupFactory() SupportedGroup {
 	SupportedGroupExtensionData := ToSupportedGroupExtensionDataByteArr(SupportedGroupExtensionDataFactory())
 	return SupportedGroup{
 		ExtensionType:   []byte{0x00, 0x0a},
-		ExtensionLength: util.Uint16ToBytes(uint16(len(SupportedGroupExtensionData))),
+		ExtensionLength: Uint16ToBytes(uint16(len(SupportedGroupExtensionData))),
 		ExtensionData:   SupportedGroupExtensionData,
 	}
 }
@@ -209,7 +206,7 @@ func SupportedGroupFactory() SupportedGroup {
 func SupportedGroupExtensionDataFactory() SupportedGroupExtensionData {
 	supportedGroupListData := []byte{0x00, 0x1d}
 	return SupportedGroupExtensionData{
-		ListLength: util.Uint16ToBytes(uint16(len(supportedGroupListData))),
+		ListLength: Uint16ToBytes(uint16(len(supportedGroupListData))),
 		List:       supportedGroupListData,
 	}
 }
@@ -218,7 +215,7 @@ func SignatureAlgorithmsFactory() SignatureAlgorithms {
 	SignatureAlgorithmsExtensionData := ToSignatureAlgorithmsExtensionDataByteArr(SignatureAlgorithmsExtensionDataFactory())
 	return SignatureAlgorithms{
 		ExtensionType:   []byte{0x00, 0x0d},
-		ExtensionLength: util.Uint16ToBytes(uint16(len(SignatureAlgorithmsExtensionData))),
+		ExtensionLength: Uint16ToBytes(uint16(len(SignatureAlgorithmsExtensionData))),
 		ExtensionData:   SignatureAlgorithmsExtensionData,
 	}
 }
@@ -232,7 +229,7 @@ func SignatureAlgorithmsExtensionDataFactory() SignatureAlgorithmsExtensionData 
 	}
 
 	return SignatureAlgorithmsExtensionData{
-		ListLength: util.Uint16ToBytes(uint16(len(SignatureAlgorithmsList))),
+		ListLength: Uint16ToBytes(uint16(len(SignatureAlgorithmsList))),
 		List:       SignatureAlgorithmsList,
 	}
 }
@@ -241,7 +238,7 @@ func SupportedVersionsFactory() SupportedVersion {
 	SupportedVersionsExtensionData := ToSupportedVersionExtensionDataByteArr(SupportedVersionExtensionDataFactory())
 	return SupportedVersion{
 		ExtensionType:   []byte{0x00, 0x2b},
-		ExtensionLength: util.Uint16ToBytes(uint16(len(SupportedVersionsExtensionData))),
+		ExtensionLength: Uint16ToBytes(uint16(len(SupportedVersionsExtensionData))),
 		ExtensionData:   SupportedVersionsExtensionData,
 	}
 }
@@ -258,7 +255,7 @@ func PskKeyExchangeModesFactory() PskKeyExchangeModes {
 	ListData := []byte{0x01, 0x01}
 	return PskKeyExchangeModes{
 		ExtensionType:   []byte{0x00, 0x2d},
-		ExtensionLength: util.Uint16ToBytes(uint16(len(ListData))),
+		ExtensionLength: Uint16ToBytes(uint16(len(ListData))),
 		ExtensionData:   ListData,
 	}
 }
@@ -267,7 +264,7 @@ func KeyShareFactory(publickey []byte) KeyShare {
 	KeyShareData := ToKeyShareExtensionDataByteArr(KeyShareExtensionFactory(publickey))
 	return KeyShare{
 		ExtensionType:   []byte{0x00, 0x33},
-		ExtensionLength: util.Uint16ToBytes(uint16(len(KeyShareData))),
+		ExtensionLength: Uint16ToBytes(uint16(len(KeyShareData))),
 		ExtensionData:   KeyShareData,
 	}
 }
@@ -275,15 +272,15 @@ func KeyShareFactory(publickey []byte) KeyShare {
 func KeyShareExtensionFactory(publickey []byte) KeyShareExtensionData {
 	KeyX25519 := ToKeyShareListByteArr(KeyShareListFactory(publickey, 0x001D))
 	return KeyShareExtensionData{
-		ListLength: util.Uint16ToBytes(uint16(len(KeyX25519))),
+		ListLength: Uint16ToBytes(uint16(len(KeyX25519))),
 		List:       KeyX25519,
 	}
 }
 
 func KeyShareListFactory(publickey []byte, number int16) KeyShareList {
 	return KeyShareList{
-		NamedGroup:        util.Uint16ToBytes(uint16(number)),
-		KeyExchangeLength: util.Uint16ToBytes(uint16(len(publickey))),
+		NamedGroup:        Uint16ToBytes(uint16(number)),
+		KeyExchangeLength: Uint16ToBytes(uint16(len(publickey))),
 		KeyExchange:       publickey,
 	}
 }

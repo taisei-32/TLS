@@ -1,4 +1,4 @@
-package common
+package tls
 
 var (
 	TLS_VERSION_1_3        = []byte{0x03, 0x04}

@@ -1,8 +1,4 @@
-package internal
-
-import (
-	"github.com/taisei-32/TLS/internal/util"
-)
+package tls
 
 type RecordClientHello struct {
 	ContentType   []byte
@@ -22,7 +18,7 @@ func ClientHandshakeFactory(servername string) HandshakeClientHello {
 
 	return HandshakeClientHello{
 		HandshakeType: []byte{0x01},
-		Length:        util.Uint24ToBytes(uint32((len(clinetHello)))),
+		Length:        Uint24ToBytes(uint32((len(clinetHello)))),
 		clientHello:   clinetHello,
 	}
 }
@@ -33,7 +29,7 @@ func ClientHelloRecordFactory(servername string) RecordClientHello {
 	return RecordClientHello{
 		ContentType:   []byte{0x16},
 		LegacyVersion: []byte{0x03, 0x03},
-		Length:        util.Uint16ToBytes(uint16((len(handshakeclient)))),
+		Length:        Uint16ToBytes(uint16((len(handshakeclient)))),
 		Payload:       handshakeclient,
 	}
 }

@@ -1,4 +1,4 @@
-package util_test
+package tls_test
 
 // func TestGenerateRandom32Bytes(t *testing.T) {
 // 	t.Run("32バイトのランダムな値が生成できる", func(t *testing.T) {

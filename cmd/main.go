@@ -3,13 +3,13 @@ package main
 import (
 	"fmt"
 
-	"github.com/taisei-32/TLS/internal"
 	"github.com/taisei-32/TLS/internal/tcp"
+	"github.com/taisei-32/TLS/internal/tls"
 )
 
 func main() {
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	servername := "www.itotai.com"
+	servername := "www.example.com"
 	url := servername + ":443"
 	fmt.Println("hostname: ", url)
 	conn, err := tcp.Conn(url)
@@ -20,7 +20,9 @@ func main() {
 	}
 	defer conn.Close()
 
-	clientHello := internal.ToClientRecordByteArr(internal.ClientHelloRecordFactory(servername))
+	clientHelloStr := tls.ClientHelloRecordFactory(servername)
+
+	clientHello := tls.ToClientRecordByteArr(clientHelloStr)
 
 	fmt.Println("ClientHello:", clientHello)
 
@@ -38,4 +40,17 @@ func main() {
 	}
 
 	fmt.Println("Received response:", response[:n])
+
+	length := response[4]
+	result, _ := tls.ServerHelloFactory(response[5 : 5+length])
+
+	fmt.Println("ServerHello parsed successfully")
+	fmt.Println("ServerHello Length:", length)
+	fmt.Println("ServerHello Version:", result.Version)
+	fmt.Println("ServerHello Random:", result.Random)
+	fmt.Println("ServerHello SessionID Length:", result.SessionIDLength)
+	fmt.Println("ServerHello SessionID:", result.SessionID)
+	fmt.Println("ServerHello CipherSuite:", result.CipherSuite)
+
+	keyshare := tls.GenerateSharedSecret(clientHelloStr.Payl
 }
