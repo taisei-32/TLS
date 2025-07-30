@@ -9,7 +9,6 @@ type ClientHelloExtensionType struct {
 	KeyShare            []byte
 }
 
-// ここはもっといいやり方があるはず
 type Extension struct {
 	ExtensionType   []byte
 	ExtensionLength []byte
@@ -21,26 +20,12 @@ type ExtensionData struct {
 	List       []byte
 }
 
-// server_name
-// ├─ 拡張タイプ
-// ├─ 拡張全体の長さ
-// └─ 拡張データ
-//
-//	├─ Server Name List Length
-//	└─ Server Name List
-//	   └─ [エントリ1]
-//	      ├─ Name Type
-//	      ├─ Name Length
-//	      └─ Server Name
 type ServerName struct {
-	ExtensionType   []byte
-	ExtensionLength []byte
-	ExtensionData   []byte
+	Extension
 }
 
 type ServerNameExtensionData struct {
-	ListLength []byte
-	List       []byte
+	ExtensionData
 }
 
 type ServerNameList struct {
@@ -49,100 +34,40 @@ type ServerNameList struct {
 	Name       []byte
 }
 
-// supported_group
-// ├─ 拡張タイプ
-// ├─ 拡張全体の長さ
-// └─ 拡張データ
-//    ├─ Supported Versions List Length
-//    └─ Supported Versions List
-//       ├─ Version 1
-//       └─ Version 2
-
 type SupportedGroup struct {
-	ExtensionType   []byte
-	ExtensionLength []byte
-	ExtensionData   []byte
+	Extension
 }
 
 type SupportedGroupExtensionData struct {
-	ListLength []byte
-	List       []byte
+	ExtensionData
 }
 
-// signature_algorithms
-// ├─ 拡張タイプ
-// ├─ 拡張全体の長さ
-// └─ 拡張データ
-//    ├─ Signature Algorithms List Length
-//    └─ Signature Algorithms List
-//       ├─ Signature Scheme 1
-//       ├─ Signature Scheme 2
-
 type SignatureAlgorithms struct {
-	ExtensionType   []byte
-	ExtensionLength []byte
-	ExtensionData   []byte
+	Extension
 }
 
 type SignatureAlgorithmsExtensionData struct {
-	ListLength []byte
-	List       []byte
+	ExtensionData
 }
 
-// supported_version
-// ├─ 拡張タイプ
-// ├─ 拡張全体の長さ
-// └─ 拡張データ
-//    ├─ Supported Versions List Length
-//    └─ Supported Versions List
-//       ├─ Version 1
-//       ├─ Version 2
-
 type SupportedVersion struct {
-	ExtensionType   []byte
-	ExtensionLength []byte
-	ExtensionData   []byte
+	Extension
 }
 
 type SupportedVersionExtensionData struct {
-	ListLength []byte
-	List       []byte
+	ExtensionData
 }
-
-// psk_key_exchange_moded
-// ├─ 拡張タイプ
-// ├─ 拡張全体の長さ
-// └─ 拡張データ
-//    ├─ KE Modes List Length
-//    └─ KE Modes List
-//       └─ KE Mode
 
 type PskKeyExchangeModes struct {
-	ExtensionType   []byte
-	ExtensionLength []byte
-	ExtensionData   []byte
+	Extension
 }
 
-// key_share
-// ├─ 拡張タイプ
-// ├─ 拡張全体の長さ
-// └─ 拡張データ
-//    ├─ Client Key Share List Length
-//    └─ Client Key Share List
-//       └─ [Key Share Entry 1]
-//          ├─ Named Group
-//          ├─ Key Exchange Length
-//          └─ Key Exchange
-
 type KeyShare struct {
-	ExtensionType   []byte
-	ExtensionLength []byte
-	ExtensionData   []byte
+	Extension
 }
 
 type KeyShareExtensionData struct {
-	ListLength []byte
-	List       []byte
+	ExtensionData
 }
 
 type KeyShareList struct {
@@ -151,13 +76,13 @@ type KeyShareList struct {
 	KeyExchange       []byte
 }
 
-func ClientHelloExtensionFactory1(publickey []byte, servername string) ClientHelloExtensionType {
-	ServerNameData := ToServerNameByteArr(ServerNameFactory(servername))
-	SupportedGroupData := ToSuportedGroupByteArr(SupportedGroupFactory())
-	SignatureAlgorithmData := ToSingnatureAlgorithmsByteArr(SignatureAlgorithmsFactory())
-	SupportedVersionsData := ToSupportedVersionsByteArr(SupportedVersionsFactory())
-	PskKeyExchangeModesData := ToPskKeyExchangeModesByteArr(PskKeyExchangeModesFactory())
-	KeyShareData := ToKeyShareByteArr(KeyShareFactory(publickey))
+func ClientHelloExtensionFactory(publickey []byte, servername string) ClientHelloExtensionType {
+	ServerNameData := ToExtensionByteArr(ServerNameFactory(servername))
+	SupportedGroupData := ToExtensionByteArr(SupportedGroupFactory())
+	SignatureAlgorithmData := ToExtensionByteArr(SignatureAlgorithmsFactory())
+	SupportedVersionsData := ToExtensionByteArr(SupportedVersionsFactory())
+	PskKeyExchangeModesData := ToExtensionByteArr(PskKeyExchangeModesFactory())
+	KeyShareData := ToExtensionByteArr(KeyShareFactory(publickey))
 
 	return ClientHelloExtensionType{
 		ServerName:          ServerNameData,
@@ -169,18 +94,72 @@ func ClientHelloExtensionFactory1(publickey []byte, servername string) ClientHel
 	}
 }
 
-func ServerNameFactory(servername string) ServerName {
-	ServerNameExtensionData := ToServerNameExtensionByteArr(ServerNameExtensionDataFactory(servername))
-	return ServerName{
+// func ExtensionFactory(Type string, servername ...string) Extension {
+// 	var ExtensionType int16
+// 	ExtensionData := ToExtensionByteArr(ExtensionDataFactory(Type, servername))
+
+// 	switch Type {
+// 	case ServerName:
+// 		ExtensionType = common.ServerName
+// 	case SupportedGroup:
+// 		ExtensionType = common.SupportedGroup
+// 	case SignatureAlgorithms:
+// 		ExtensionType = common.SignatureAlgorithms
+// 	case SupportedVersions:
+// 		ExtensionType = common.SupportedVersions
+// 	case PskKeyExchangeModes:
+// 		ExtensionType = common.PskKeyExchangeModes
+// 	case KeyShare:
+// 		ExtensionType = common.KeyShare
+// 	}
+
+// 	return Extension{
+// 		ExtensionType: Uint16ToBytes(uint16(ExtensionType)),
+// 		ExtensionLength: Uint16ToBytes(uint16(len(ExtensionData))),
+// 		ExtensionData: ExtensionData,
+// 	}
+// }
+
+// func ExtensionDataFactory(Type string, servername ...string) ExtensionData {
+// 	var ListData []byte
+
+// 	switch Type {
+// 	case ServerName:
+// 		ListData = ToServerNameListByteArr(ServerNameListFactory(servername))
+// 	case SupportedGroup:
+// 		ListData = []byte{0x00, 0x1d}
+// 	case SignatureAlgorithms:
+// 		ListData = []byte{
+// 		0x04, 0x01,
+// 		0x04, 0x03,
+// 		0x08, 0x04,
+// 		0x08, 0x07,
+// 	}
+// 	case SupportedVersions:
+// 		ListData = []byte{0x03, 0x04}
+// 	case PskKeyExchangeModes:
+// 		ListData = []byte{0x01, 0x01}
+// 	case KeyShare:
+// 		ListData = ToKeyShareListByteArr(KeyShareListFactory(publickey, 0x001D))
+// 	}
+// 	return ExtensionData{
+// 		ListLength: Uint16ToBytes(uint16(len(ListData))),
+// 		List: ListData,
+// 	}
+// }
+
+func ServerNameFactory(servername string) Extension {
+	ServerNameExtensionData := ToExtensionDataByteArr(ServerNameExtensionDataFactory(servername))
+	return Extension{
 		ExtensionType:   []byte{0x00, 0x00},
 		ExtensionLength: Uint16ToBytes(uint16(len(ServerNameExtensionData))),
 		ExtensionData:   ServerNameExtensionData,
 	}
 }
 
-func ServerNameExtensionDataFactory(servername string) ServerNameExtensionData {
+func ServerNameExtensionDataFactory(servername string) ExtensionData {
 	ServerNameData := ToServerNameListByteArr(ServerNameListFactory(servername))
-	return ServerNameExtensionData{
+	return ExtensionData{
 		ListLength: Uint16ToBytes(uint16(len(ServerNameData))),
 		List:       ServerNameData,
 	}
@@ -194,33 +173,33 @@ func ServerNameListFactory(servername string) ServerNameList {
 	}
 }
 
-func SupportedGroupFactory() SupportedGroup {
-	SupportedGroupExtensionData := ToSupportedGroupExtensionDataByteArr(SupportedGroupExtensionDataFactory())
-	return SupportedGroup{
+func SupportedGroupFactory() Extension {
+	SupportedGroupExtensionData := ToExtensionDataByteArr(SupportedGroupExtensionDataFactory())
+	return Extension{
 		ExtensionType:   []byte{0x00, 0x0a},
 		ExtensionLength: Uint16ToBytes(uint16(len(SupportedGroupExtensionData))),
 		ExtensionData:   SupportedGroupExtensionData,
 	}
 }
 
-func SupportedGroupExtensionDataFactory() SupportedGroupExtensionData {
+func SupportedGroupExtensionDataFactory() ExtensionData {
 	supportedGroupListData := []byte{0x00, 0x1d}
-	return SupportedGroupExtensionData{
+	return ExtensionData{
 		ListLength: Uint16ToBytes(uint16(len(supportedGroupListData))),
 		List:       supportedGroupListData,
 	}
 }
 
-func SignatureAlgorithmsFactory() SignatureAlgorithms {
-	SignatureAlgorithmsExtensionData := ToSignatureAlgorithmsExtensionDataByteArr(SignatureAlgorithmsExtensionDataFactory())
-	return SignatureAlgorithms{
+func SignatureAlgorithmsFactory() Extension {
+	SignatureAlgorithmsExtensionData := ToExtensionDataByteArr(SignatureAlgorithmsExtensionDataFactory())
+	return Extension{
 		ExtensionType:   []byte{0x00, 0x0d},
 		ExtensionLength: Uint16ToBytes(uint16(len(SignatureAlgorithmsExtensionData))),
 		ExtensionData:   SignatureAlgorithmsExtensionData,
 	}
 }
 
-func SignatureAlgorithmsExtensionDataFactory() SignatureAlgorithmsExtensionData {
+func SignatureAlgorithmsExtensionDataFactory() ExtensionData {
 	SignatureAlgorithmsList := []byte{
 		0x04, 0x01,
 		0x04, 0x03,
@@ -228,50 +207,50 @@ func SignatureAlgorithmsExtensionDataFactory() SignatureAlgorithmsExtensionData 
 		0x08, 0x07,
 	}
 
-	return SignatureAlgorithmsExtensionData{
+	return ExtensionData{
 		ListLength: Uint16ToBytes(uint16(len(SignatureAlgorithmsList))),
 		List:       SignatureAlgorithmsList,
 	}
 }
 
-func SupportedVersionsFactory() SupportedVersion {
-	SupportedVersionsExtensionData := ToSupportedVersionExtensionDataByteArr(SupportedVersionExtensionDataFactory())
-	return SupportedVersion{
+func SupportedVersionsFactory() Extension {
+	SupportedVersionsExtensionData := ToExtensionDataByteArr(SupportedVersionExtensionDataFactory())
+	return Extension{
 		ExtensionType:   []byte{0x00, 0x2b},
 		ExtensionLength: Uint16ToBytes(uint16(len(SupportedVersionsExtensionData))),
 		ExtensionData:   SupportedVersionsExtensionData,
 	}
 }
 
-func SupportedVersionExtensionDataFactory() SupportedVersionExtensionData {
+func SupportedVersionExtensionDataFactory() ExtensionData {
 	supportedVersionsData := []byte{0x03, 0x04}
-	return SupportedVersionExtensionData{
+	return ExtensionData{
 		ListLength: []byte{byte(len(supportedVersionsData))},
 		List:       supportedVersionsData,
 	}
 }
 
-func PskKeyExchangeModesFactory() PskKeyExchangeModes {
+func PskKeyExchangeModesFactory() Extension {
 	ListData := []byte{0x01, 0x01}
-	return PskKeyExchangeModes{
+	return Extension{
 		ExtensionType:   []byte{0x00, 0x2d},
 		ExtensionLength: Uint16ToBytes(uint16(len(ListData))),
 		ExtensionData:   ListData,
 	}
 }
 
-func KeyShareFactory(publickey []byte) KeyShare {
-	KeyShareData := ToKeyShareExtensionDataByteArr(KeyShareExtensionFactory(publickey))
-	return KeyShare{
+func KeyShareFactory(publickey []byte) Extension {
+	KeyShareData := ToExtensionDataByteArr(KeyShareExtensionFactory(publickey))
+	return Extension{
 		ExtensionType:   []byte{0x00, 0x33},
 		ExtensionLength: Uint16ToBytes(uint16(len(KeyShareData))),
 		ExtensionData:   KeyShareData,
 	}
 }
 
-func KeyShareExtensionFactory(publickey []byte) KeyShareExtensionData {
+func KeyShareExtensionFactory(publickey []byte) ExtensionData {
 	KeyX25519 := ToKeyShareListByteArr(KeyShareListFactory(publickey, 0x001D))
-	return KeyShareExtensionData{
+	return ExtensionData{
 		ListLength: Uint16ToBytes(uint16(len(KeyX25519))),
 		List:       KeyX25519,
 	}
@@ -304,117 +283,12 @@ func ToExtensionDataByteArr(ext ExtensionData) []byte {
 	return arr
 }
 
-func ToServerNameByteArr(ext ServerName) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ExtensionType...)
-	arr = append(arr, ext.ExtensionLength...)
-	arr = append(arr, ext.ExtensionData...)
-
-	return arr
-}
-
-func ToServerNameExtensionByteArr(ext ServerNameExtensionData) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ListLength...)
-	arr = append(arr, ext.List...)
-
-	return arr
-}
-
 func ToServerNameListByteArr(ext ServerNameList) []byte {
 	var arr []byte
 
 	arr = append(arr, ext.NameType...)
 	arr = append(arr, ext.NameLength...)
 	arr = append(arr, ext.Name...)
-
-	return arr
-}
-
-func ToSuportedGroupByteArr(ext SupportedGroup) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ExtensionType...)
-	arr = append(arr, ext.ExtensionLength...)
-	arr = append(arr, ext.ExtensionData...)
-
-	return arr
-}
-
-func ToSupportedGroupExtensionDataByteArr(ext SupportedGroupExtensionData) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ListLength...)
-	arr = append(arr, ext.List...)
-
-	return arr
-}
-
-func ToSingnatureAlgorithmsByteArr(ext SignatureAlgorithms) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ExtensionType...)
-	arr = append(arr, ext.ExtensionLength...)
-	arr = append(arr, ext.ExtensionData...)
-
-	return arr
-}
-
-func ToSignatureAlgorithmsExtensionDataByteArr(ext SignatureAlgorithmsExtensionData) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ListLength...)
-	arr = append(arr, ext.List...)
-
-	return arr
-}
-
-func ToSupportedVersionsByteArr(ext SupportedVersion) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ExtensionType...)
-	arr = append(arr, ext.ExtensionLength...)
-	arr = append(arr, ext.ExtensionData...)
-
-	return arr
-}
-
-func ToSupportedVersionExtensionDataByteArr(ext SupportedVersionExtensionData) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ListLength...)
-	arr = append(arr, ext.List...)
-
-	return arr
-}
-
-func ToPskKeyExchangeModesByteArr(ext PskKeyExchangeModes) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ExtensionType...)
-	arr = append(arr, ext.ExtensionLength...)
-	arr = append(arr, ext.ExtensionData...)
-
-	return arr
-}
-
-func ToKeyShareByteArr(ext KeyShare) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ExtensionType...)
-	arr = append(arr, ext.ExtensionLength...)
-	arr = append(arr, ext.ExtensionData...)
-
-	return arr
-}
-
-func ToKeyShareExtensionDataByteArr(ext KeyShareExtensionData) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ListLength...)
-	arr = append(arr, ext.List...)
 
 	return arr
 }

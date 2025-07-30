@@ -52,5 +52,5 @@ func main() {
 	fmt.Println("ServerHello SessionID:", result.SessionID)
 	fmt.Println("ServerHello CipherSuite:", result.CipherSuite)
 
-	keyshare := tls.GenerateSharedSecret(clientHelloStr.Payl
+	// keyshare := tls.GenerateSharedSecret(clientHelloStr.Payl)
 }

@@ -9,19 +9,13 @@ type ClientHello struct {
 	Extensions               []byte
 }
 
-// type Extension struct {
-// 	ExtensionType     []byte
-// 	ExtensionLength   []byte
-// 	ExtensionTypeData []byte
-// }
-
 func ClientHelloFactory(servername string) ClientHello {
-	private, public, err := GenEcdhX25519()
+	_, public, err := GenEcdhX25519()
 	if err != nil {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
 
-	ExtensionsData := ToClientHelloExtensionTypeByteArr(ClientHelloExtensionFactory1(public.Bytes(), servername))
+	ExtensionsData := ToClientHelloExtensionTypeByteArr(ClientHelloExtensionFactory(public.Bytes(), servername))
 
 	return ClientHello{
 		LegacyVersion:            [2]byte{0x03, 0x03}, // TLS 1.3
@@ -30,12 +24,6 @@ func ClientHelloFactory(servername string) ClientHello {
 		CipherSuites:             []byte{0x13, 0x01, 0x13, 0x02, 0x13, 0x03},
 		LegacyCompressionMethods: []byte{0x00},
 		Extensions:               ExtensionsData,
-		// Extensions: []Extension{
-		// 	{
-		// 		ExtensionType:     []byte{0x01, 0x09},
-		// 		ExtensionTypeData: public.Bytes(),
-		// 	},
-		// },
 	}
 }
 
