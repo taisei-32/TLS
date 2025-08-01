@@ -9,7 +9,7 @@ import (
 
 func main() {
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	servername := "www.example.com"
+	servername := "www.itotai.com"
 	url := servername + ":443"
 	fmt.Println("hostname: ", url)
 	conn, err := tcp.Conn(url)
@@ -39,6 +39,7 @@ func main() {
 		panic("Failed to read response: " + err.Error())
 	}
 
+	fmt.Println("Received response length:", n)
 	fmt.Println("Received response:", response[:n])
 
 	length := response[4]
