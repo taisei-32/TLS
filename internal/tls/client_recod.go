@@ -1,5 +1,7 @@
 package tls
 
+import "crypto/ecdh"
+
 type RecordClientHello struct {
 	ContentType   []byte
 	LegacyVersion []byte
@@ -13,8 +15,8 @@ type HandshakeClientHello struct {
 	clientHello   []byte
 }
 
-func ClientHandshakeFactory(servername string) HandshakeClientHello {
-	clinetHello := ToClientByteArr(ClientHelloFactory(servername))
+func ClientHandshakeFactory(servername string, publickey *ecdh.PublicKey) HandshakeClientHello {
+	clinetHello := ToClientByteArr(ClientHelloFactory(servername, publickey))
 
 	return HandshakeClientHello{
 		HandshakeType: []byte{0x01},
@@ -23,8 +25,8 @@ func ClientHandshakeFactory(servername string) HandshakeClientHello {
 	}
 }
 
-func ClientHelloRecordFactory(servername string) RecordClientHello {
-	handshakeclient := ToClientHandshakeByteArr(ClientHandshakeFactory(servername))
+func ClientHelloRecordFactory(servername string, publickey *ecdh.PublicKey) RecordClientHello {
+	handshakeclient := ToClientHandshakeByteArr(ClientHandshakeFactory(servername, publickey))
 
 	return RecordClientHello{
 		ContentType:   []byte{0x16},
@@ -32,29 +34,4 @@ func ClientHelloRecordFactory(servername string) RecordClientHello {
 		Length:        Uint16ToBytes(uint16((len(handshakeclient)))),
 		Payload:       handshakeclient,
 	}
-}
-
-func ToClientHandshakeByteArr(ext HandshakeClientHello) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.HandshakeType...)
-	arr = append(arr, ext.Length[:]...)
-	arr = append(arr, ext.clientHello...)
-
-	// fmt.Println("ToClientHandshake: ", arr)
-
-	return arr
-}
-
-func ToClientRecordByteArr(ext RecordClientHello) []byte {
-	var arr []byte
-
-	arr = append(arr, ext.ContentType...)
-	arr = append(arr, ext.LegacyVersion...)
-	arr = append(arr, ext.Length...)
-	arr = append(arr, ext.Payload...)
-
-	// fmt.Println("ToClientRecord: ", arr)
-
-	return arr
 }

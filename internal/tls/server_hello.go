@@ -35,22 +35,23 @@ func ServerHelloFactory(packet []byte) (ServerHello, error) {
 		CompressionMethod: packet[73:74],
 		ExtensionLength:   packet[74:76],
 	}
-	// supported_versions
-	serverHello.TLSExtensions = append(serverHello.TLSExtensions, TLSExtensions{
-		Type:   packet[75:77],
-		Length: packet[77:79],
-		Value:  packet[79:81],
-	})
 
 	//key_share
 	serverHello.TLSExtensions = append(serverHello.TLSExtensions, TLSExtensions{
-		Type:   packet[81:83],
-		Length: packet[83:85],
+		Type:   packet[76:78],
+		Length: packet[78:80],
 		Value: map[string]interface{}{
-			"Group":             packet[83:84],
-			"KeyExchangeLength": packet[85:86],
-			"KeyExchange":       packet[86:102],
+			"Group":             packet[80:82],
+			"KeyExchangeLength": packet[82:84],
+			"KeyExchange":       packet[84:116],
 		},
+	})
+
+	// supported_versions
+	serverHello.TLSExtensions = append(serverHello.TLSExtensions, TLSExtensions{
+		Type:   packet[116:118],
+		Length: packet[118:120],
+		Value:  packet[120:122],
 	})
 
 	return serverHello, nil

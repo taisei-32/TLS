@@ -1,0 +1,17 @@
+package tls
+
+import (
+	"crypto/sha256"
+	"crypto/sha512"
+	"hash"
+)
+
+func getHash(hashAlgorithm string) func() hash.Hash {
+	switch hashAlgorithm {
+	case "SHA256":
+		return sha256.New
+	case "SHA384":
+		return sha512.New
+	}
+	panic("unsupported hash algorithm: " + hashAlgorithm)
+}
