@@ -8,9 +8,11 @@ import (
 )
 
 type HkdfLabel struct {
-	length  uint
-	label   string
-	context []byte
+	Length        []byte
+	LabelLength   byte
+	Label         []byte
+	ContextLength byte
+	Context       []byte
 }
 
 func HKDFExtract(hashFunc func() hash.Hash, salt []byte, secret []byte) []byte {
@@ -18,7 +20,7 @@ func HKDFExtract(hashFunc func() hash.Hash, salt []byte, secret []byte) []byte {
 }
 
 func DeriveSecret(secret []byte, label string, transcriptHash []byte, hashFunc func() hash.Hash) []byte {
-	return HKDFExpandLabel(secret, label, transcriptHash, hashFunc)
+	return HKDFExpandLabel(secret, label, transcriptHash, hashFunc().Size(), hashFunc)
 }
 
 func HKDFExpand(secret []byte, label []byte, length int, hashFunc func() hash.Hash) []byte {
@@ -32,12 +34,17 @@ func HKDFExpand(secret []byte, label []byte, length int, hashFunc func() hash.Ha
 	return expand_byte
 }
 
-func HKDFExpandLabel(secret []byte, label string, context []byte, hashFunc func() hash.Hash) []byte {
+func HKDFExpandLabel(secret []byte, label string, transcriptHash []byte, length int, hashFunc func() hash.Hash) []byte {
+	labelData := []byte("tls13 " + label)
 	hkdflabel := HkdfLabel{
-		length:  uint(hashFunc().Size()),
-		label:   "tls13" + label,
-		context: context,
+		Length:        Uint16ToBytes(uint16((length))),
+		LabelLength:   byte(len(labelData)),
+		Label:         labelData,
+		ContextLength: byte(len(transcriptHash)),
+		Context:       transcriptHash,
 	}
 
-	return HKDFExpand(secret, ToHkdfLabelByteArr(hkdflabel), int(hkdflabel.length), hashFunc)
+	a := ToHkdfLabelByteArr(hkdflabel)
+
+	return HKDFExpand(secret, a, length, hashFunc)
 }

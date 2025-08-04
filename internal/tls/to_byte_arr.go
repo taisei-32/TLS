@@ -1,6 +1,8 @@
 package tls
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+)
 
 func Uint16ToBytes(n uint16) []byte {
 	b := make([]byte, 2)
@@ -67,8 +69,6 @@ func ToClientHandshakeByteArr(ext HandshakeClientHello) []byte {
 	arr = append(arr, ext.Length[:]...)
 	arr = append(arr, ext.clientHello...)
 
-	// fmt.Println("ToClientHandshake: ", arr)
-
 	return arr
 }
 
@@ -79,8 +79,6 @@ func ToClientRecordByteArr(ext RecordClientHello) []byte {
 	arr = append(arr, ext.LegacyVersion...)
 	arr = append(arr, ext.Length...)
 	arr = append(arr, ext.Payload...)
-
-	// fmt.Println("ToClientRecord: ", arr)
 
 	return arr
 }
@@ -140,9 +138,11 @@ func ToClientHelloExtensionTypeByteArr(ext ClientHelloExtensionType) []byte {
 func ToHkdfLabelByteArr(ext HkdfLabel) []byte {
 	var arr []byte
 
-	arr = append(arr, Uint16ToBytes(uint16(ext.length))...)
-	arr = append(arr, []byte(ext.label)...)
-	arr = append(arr, ext.context...)
+	arr = append(arr, ext.Length...)
+	arr = append(arr, ext.LabelLength)
+	arr = append(arr, ext.Label...)
+	arr = append(arr, ext.ContextLength)
+	arr = append(arr, ext.Context...)
 
 	return arr
 }
