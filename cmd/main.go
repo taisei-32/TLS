@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/ecdh"
 	"fmt"
+	"io"
 	"log"
 
 	"github.com/taisei-32/TLS/internal/tcp"
@@ -53,14 +54,34 @@ func main() {
 
 	fmt.Println("ClientHello sent successfully")
 
-	response := make([]byte, 4096)
-	n, err := conn.Read(response)
-	if err != nil {
-		panic("Failed to read response: " + err.Error())
+	var response []byte
+	tmpResponse := make([]byte, 8192)
+	var responseLength int
+
+	for {
+		n, err := conn.Read(tmpResponse)
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			panic("Failed to read response: " + err.Error())
+		}
+
+		fmt.Println("Received response:", tmpResponse[:n])
+		response = append(response, tmpResponse[:n]...)
+		responseLength += n
 	}
+	fmt.Println("length:", responseLength)
+	fmt.Println("Totale Received response:", response[:responseLength])
+
+	// response1 := make([]byte, 4096)
+	// n, err := conn.Read(response1)
+	// if err != nil {
+	// 	panic("Failed to read response: " + err.Error())
+	// }
 
 	// fmt.Println("Received response length:", n)
-	// fmt.Println("Received response:", response[:n])
+	// fmt.Println("Received response:", response1[:n])
 
 	length := response[4]
 	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
@@ -68,7 +89,7 @@ func main() {
 	severhellokeyshare := serverHello.TLSExtensions[0].Value.(map[string]interface{})
 	parseCipherSuite := tls.ParseCipherSuite(serverHello.CipherSuite)
 
-	encryptedMessage := response[5+length+6 : n]
+	encryptedMessage := response[5+length+6 : responseLength]
 
 	fmt.Println("ServerHello parsed successfully")
 	fmt.Println("ServerHello Length:", length)
