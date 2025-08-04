@@ -27,8 +27,6 @@ func main() {
 		publicKey:  public,
 	}
 
-	clientsecretstate := tls.SecretKey{}
-
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
 	servername := "www.itotai.com"
 	url := servername + ":443"
@@ -41,10 +39,10 @@ func main() {
 	}
 	defer conn.Close()
 
-	clientHelloStr := tls.ToClientHandshakeByteArr(tls.ClientHandshakeFactory(servername, clientkeyshare.publicKey))
-	clientRecordStr := tls.ClientHelloRecordFactory(clientHelloStr)
+	clientHelloRaw := tls.ToClientHandshakeByteArr(tls.ClientHandshakeFactory(servername, clientkeyshare.publicKey))
+	clientRecordRaw := tls.ClientHelloRecordFactory(clientHelloRaw)
 
-	clientHello := tls.ToClientRecordByteArr(clientRecordStr)
+	clientHello := tls.ToClientRecordByteArr(clientRecordRaw)
 
 	fmt.Println("ClientHello:", clientHello)
 
@@ -61,15 +59,14 @@ func main() {
 		panic("Failed to read response: " + err.Error())
 	}
 
-	fmt.Println("Received response length:", n)
-	fmt.Println("Received response:", response[:n])
+	// fmt.Println("Received response length:", n)
+	// fmt.Println("Received response:", response[:n])
 
 	length := response[4]
 	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
-	serverHelloStr := tls.ToSeverHelloByteArr(serverHello)
+	serverHelloRaw := tls.ToSeverHelloByteArr(serverHello)
 	severhellokeyshare := serverHello.TLSExtensions[0].Value.(map[string]interface{})
 	parseCipherSuite := tls.ParseCipherSuite(serverHello.CipherSuite)
-	clientsecretstate.HashAlgorithm = parseCipherSuite.Hash
 
 	encryptedMessage := response[5+length+6 : n]
 
@@ -80,10 +77,10 @@ func main() {
 	fmt.Println("ServerHello SessionID Length:", serverHello.SessionIDLength)
 	fmt.Println("ServerHello SessionID:", serverHello.SessionID)
 	fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
-	fmt.Println("ServerHello CipherSuite:", serverHello.TLSExtensions)
-	fmt.Println("ServerHello Extensions:", severhellokeyshare)
-	fmt.Println("ServerHello Extensions:", severhellokeyshare["KeyExchange"])
-	fmt.Println("ServerHello Extensions:", serverHello.TLSExtensions[1])
+	// fmt.Println("ServerHello CipherSuite:", serverHello.TLSExtensions)
+	// fmt.Println("ServerHello Extensions:", severhellokeyshare)
+	// fmt.Println("ServerHello Extensions:", severhellokeyshare["KeyExchange"])
+	// fmt.Println("ServerHello Extensions:", serverHello.TLSExtensions[1])
 
 	clientkeyshare.serverHelloKey, err = ecdh.X25519().NewPublicKey(severhellokeyshare["KeyExchange"].([]byte))
 	if err != nil {
@@ -94,12 +91,14 @@ func main() {
 	if err != nil {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
+	fmt.Println("hash:", parseCipherSuite.Hash)
 
-	hashFunc := tls.GetHash(clientsecretstate.HashAlgorithm)
-	transscipthash := tls.GenTransScriptHash(clientHelloStr, serverHelloStr, hashFunc)
+	clientsecretkey := tls.KeyScheduleFactory(parseCipherSuite.Hash, clientHelloRaw, serverHelloRaw, clientkeyshare.sharedKey)
 
-	clientsecretstate = tls.GenKeySchedule(clientkeyshare.sharedKey, hashFunc, transscipthash)
-	fmt.Println("clientSecretState:", clientsecretstate)
-	fmt.Println("encryptedMessage:", encryptedMessage)
+	// fmt.Println("clientSecretState:", clientsecretkey)
+	// fmt.Println("encryptedMessage:", encryptedMessage)
+
+	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey)
+	fmt.Println("plaintext:", rawtext)
 
 }
