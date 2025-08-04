@@ -13,13 +13,11 @@ type HkdfLabel struct {
 	context []byte
 }
 
-func HKDFExtract(secret, salt []byte, hashFunc func() hash.Hash) []byte {
-	// hash := getHash(hashAlgorithm)
+func HKDFExtract(hashFunc func() hash.Hash, salt []byte, secret []byte) []byte {
 	return hkdf.Extract(hashFunc, secret, salt)
 }
 
 func DeriveSecret(secret []byte, label string, transcriptHash []byte, hashFunc func() hash.Hash) []byte {
-	// hash := getHash(hashAlgorithm)
 	return HKDFExpandLabel(secret, label, transcriptHash, hashFunc)
 }
 

@@ -25,13 +25,11 @@ func ClientHandshakeFactory(servername string, publickey *ecdh.PublicKey) Handsh
 	}
 }
 
-func ClientHelloRecordFactory(servername string, publickey *ecdh.PublicKey) RecordClientHello {
-	handshakeclient := ToClientHandshakeByteArr(ClientHandshakeFactory(servername, publickey))
-
+func ClientHelloRecordFactory(clientHelloStr []byte) RecordClientHello {
 	return RecordClientHello{
 		ContentType:   []byte{0x16},
 		LegacyVersion: []byte{0x03, 0x03},
-		Length:        Uint16ToBytes(uint16((len(handshakeclient)))),
-		Payload:       handshakeclient,
+		Length:        Uint16ToBytes(uint16((len(clientHelloStr)))),
+		Payload:       clientHelloStr,
 	}
 }

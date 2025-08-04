@@ -9,18 +9,11 @@ import (
 	"github.com/taisei-32/TLS/internal/tls"
 )
 
-type Key struct {
-	privateKey ecdh.PrivateKey
-	publicKey  ecdh.PublicKey
-	hash       string
-	// binder_key
-	// client_early_traffic_secret
-	// early_exporter_master_secret
-	// server_handshake_traffic_secret
-	// client_handshake_traffic_secret
-	// server_application_traffic_secret_N
-	// client_application_traffic_secret_N
-	// resumption_master_secret
+type KeyShare struct {
+	privateKey     *ecdh.PrivateKey
+	publicKey      *ecdh.PublicKey
+	serverHelloKey *ecdh.PublicKey
+	sharedKey      []byte
 }
 
 func main() {
@@ -29,10 +22,12 @@ func main() {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
 
-	Key := Key{
-		privateKey: *private,
-		publicKey:  *public,
+	clientkeyshare := KeyShare{
+		privateKey: private,
+		publicKey:  public,
 	}
+
+	clientsecretstate := tls.SecretKey{}
 
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
 	servername := "www.itotai.com"
@@ -46,9 +41,10 @@ func main() {
 	}
 	defer conn.Close()
 
-	clientHelloStr := tls.ClientHelloRecordFactory(servername, &Key.publicKey)
+	clientHelloStr := tls.ToClientHandshakeByteArr(tls.ClientHandshakeFactory(servername, clientkeyshare.publicKey))
+	clientRecordStr := tls.ClientHelloRecordFactory(clientHelloStr)
 
-	clientHello := tls.ToClientRecordByteArr(clientHelloStr)
+	clientHello := tls.ToClientRecordByteArr(clientRecordStr)
 
 	fmt.Println("ClientHello:", clientHello)
 
@@ -69,28 +65,41 @@ func main() {
 	fmt.Println("Received response:", response[:n])
 
 	length := response[4]
-	result, _ := tls.ServerHelloFactory(response[5 : 5+length])
-	keyshare := result.TLSExtensions[0].Value.(map[string]interface{})
-	parseCipherSuite := tls.ParseCipherSuite(result.CipherSuite)
-	Key.hash = parseCipherSuite.Hash
+	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
+	serverHelloStr := tls.ToSeverHelloByteArr(serverHello)
+	severhellokeyshare := serverHello.TLSExtensions[0].Value.(map[string]interface{})
+	parseCipherSuite := tls.ParseCipherSuite(serverHello.CipherSuite)
+	clientsecretstate.HashAlgorithm = parseCipherSuite.Hash
+
+	encryptedMessage := response[5+length+6 : n]
 
 	fmt.Println("ServerHello parsed successfully")
 	fmt.Println("ServerHello Length:", length)
-	fmt.Println("ServerHello Version:", result.Version)
-	fmt.Println("ServerHello Random:", result.Random)
-	fmt.Println("ServerHello SessionID Length:", result.SessionIDLength)
-	fmt.Println("ServerHello SessionID:", result.SessionID)
-	fmt.Println("ServerHello CipherSuite:", result.CipherSuite)
-	fmt.Println("ServerHello Extensions:", keyshare)
-	fmt.Println("ServerHello Extensions:", keyshare["KeyExchange"])
+	fmt.Println("ServerHello Version:", serverHello.Version)
+	fmt.Println("ServerHello Random:", serverHello.Random)
+	fmt.Println("ServerHello SessionID Length:", serverHello.SessionIDLength)
+	fmt.Println("ServerHello SessionID:", serverHello.SessionID)
+	fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
+	fmt.Println("ServerHello CipherSuite:", serverHello.TLSExtensions)
+	fmt.Println("ServerHello Extensions:", severhellokeyshare)
+	fmt.Println("ServerHello Extensions:", severhellokeyshare["KeyExchange"])
+	fmt.Println("ServerHello Extensions:", serverHello.TLSExtensions[1])
 
-	serverHelloPubKey, err := ecdh.X25519().NewPublicKey(keyshare["KeyExchange"].([]byte))
+	clientkeyshare.serverHelloKey, err = ecdh.X25519().NewPublicKey(severhellokeyshare["KeyExchange"].([]byte))
 	if err != nil {
 		log.Fatal("failed to parse peer public key:", err)
 	}
 
-	sharekey, err := tls.GenerateSharedSecret(&Key.privateKey, serverHelloPubKey)
+	clientkeyshare.sharedKey, err = tls.GenerateSharedSecret(clientkeyshare.privateKey, clientkeyshare.serverHelloKey)
 	if err != nil {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
+
+	hashFunc := tls.GetHash(clientsecretstate.HashAlgorithm)
+	transscipthash := tls.GenTransScriptHash(clientHelloStr, serverHelloStr, hashFunc)
+
+	clientsecretstate = tls.GenKeySchedule(clientkeyshare.sharedKey, hashFunc, transscipthash)
+	fmt.Println("clientSecretState:", clientsecretstate)
+	fmt.Println("encryptedMessage:", encryptedMessage)
+
 }

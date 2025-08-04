@@ -16,6 +16,33 @@ func Uint24ToBytes(n uint32) [3]byte {
 	return buf
 }
 
+func ToSeverHelloByteArr(ext ServerHello) []byte {
+	var arr []byte
+	keyshare := ext.TLSExtensions[0]
+	keyshare_value := keyshare.Value.(map[string]interface{})
+	version := ext.TLSExtensions[1]
+
+	arr = append(arr, ext.ContentType...)
+	arr = append(arr, ext.Length...)
+	arr = append(arr, ext.Version...)
+	arr = append(arr, ext.Random...)
+	arr = append(arr, ext.SessionIDLength...)
+	arr = append(arr, ext.SessionID...)
+	arr = append(arr, ext.CipherSuite...)
+	arr = append(arr, ext.CompressionMethod...)
+	arr = append(arr, ext.ExtensionLength...)
+	arr = append(arr, keyshare.Type...)
+	arr = append(arr, keyshare.Length...)
+	arr = append(arr, keyshare_value["Group"].([]byte)...)
+	arr = append(arr, keyshare_value["KeyExchangeLength"].([]byte)...)
+	arr = append(arr, keyshare_value["KeyExchange"].([]byte)...)
+	arr = append(arr, version.Type...)
+	arr = append(arr, version.Length...)
+	arr = append(arr, version.Value.([]byte)...)
+
+	return arr
+}
+
 func ToClientByteArr(clienthello ClientHello) []byte {
 	var arr []byte
 

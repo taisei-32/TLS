@@ -6,7 +6,7 @@ import (
 	"hash"
 )
 
-func getHash(hashAlgorithm string) func() hash.Hash {
+func GetHash(hashAlgorithm string) func() hash.Hash {
 	switch hashAlgorithm {
 	case "SHA256":
 		return sha256.New
