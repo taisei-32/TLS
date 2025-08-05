@@ -122,4 +122,8 @@ func main() {
 	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey)
 	fmt.Println("plaintext:", rawtext)
 
+	// handshakeをみて分ける関数が欲しい
+	cetificate := tls.ParseRawData(rawtext)
+	tls.CertificateFactory(cetificate)
+
 }

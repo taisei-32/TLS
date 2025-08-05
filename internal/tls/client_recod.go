@@ -9,19 +9,19 @@ type RecordClientHello struct {
 	Payload       []byte
 }
 
-type HandshakeClientHello struct {
+type Handshake struct {
 	HandshakeType []byte
 	Length        [3]byte
-	clientHello   []byte
+	msg           []byte
 }
 
-func ClientHandshakeFactory(servername string, publickey *ecdh.PublicKey) HandshakeClientHello {
+func ClientHandshakeFactory(servername string, publickey *ecdh.PublicKey) Handshake {
 	clinetHello := ToClientByteArr(ClientHelloFactory(servername, publickey))
 
-	return HandshakeClientHello{
+	return Handshake{
 		HandshakeType: []byte{0x01},
 		Length:        Uint24ToBytes(uint32((len(clinetHello)))),
-		clientHello:   clinetHello,
+		msg:           clinetHello,
 	}
 }
 

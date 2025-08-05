@@ -104,6 +104,13 @@ const (
 	PskDheKe PskKeyExchangeMode = 0x01
 )
 
+type CertificateType uint8
+
+const (
+	X509         CertificateType = 0x00
+	RawPublicKey CertificateType = 0x02
+)
+
 var (
 	TLS_VERSION_1_3        = []byte{0x03, 0x04}
 	TLS_AES_256_GCM_SHA384 = []byte{0x13, 0x02}

@@ -62,12 +62,12 @@ func ToClientByteArr(clienthello ClientHello) []byte {
 	return arr
 }
 
-func ToClientHandshakeByteArr(ext HandshakeClientHello) []byte {
+func ToClientHandshakeByteArr(ext Handshake) []byte {
 	var arr []byte
 
 	arr = append(arr, ext.HandshakeType...)
 	arr = append(arr, ext.Length[:]...)
-	arr = append(arr, ext.clientHello...)
+	arr = append(arr, ext.msg...)
 
 	return arr
 }
