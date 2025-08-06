@@ -3,7 +3,6 @@ package main
 import (
 	"crypto/ecdh"
 	"fmt"
-	"io"
 	"log"
 
 	"github.com/taisei-32/TLS/internal/tcp"
@@ -54,25 +53,10 @@ func main() {
 
 	fmt.Println("ClientHello sent successfully")
 
-	var response []byte
-	tmpResponse := make([]byte, 8192)
-	var responseLength int
+	response, responseLength := tls.GetResponse(conn)
 
-	for {
-		n, err := conn.Read(tmpResponse)
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			panic("Failed to read response: " + err.Error())
-		}
-
-		fmt.Println("Received response:", tmpResponse[:n])
-		response = append(response, tmpResponse[:n]...)
-		responseLength += n
-	}
-	fmt.Println("length:", responseLength)
-	fmt.Println("Totale Received response:", response[:responseLength])
+	// fmt.Println("length:", responseLength)
+	// fmt.Println("Totale Received response:", response[:responseLength])
 
 	// response1 := make([]byte, 4096)
 	// n, err := conn.Read(response1)
@@ -91,13 +75,13 @@ func main() {
 
 	encryptedMessage := response[5+length+6 : responseLength]
 
-	fmt.Println("ServerHello parsed successfully")
-	fmt.Println("ServerHello Length:", length)
-	fmt.Println("ServerHello Version:", serverHello.Version)
-	fmt.Println("ServerHello Random:", serverHello.Random)
-	fmt.Println("ServerHello SessionID Length:", serverHello.SessionIDLength)
-	fmt.Println("ServerHello SessionID:", serverHello.SessionID)
-	fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
+	// fmt.Println("ServerHello parsed successfully")
+	// fmt.Println("ServerHello Length:", length)
+	// fmt.Println("ServerHello Version:", serverHello.Version)
+	// fmt.Println("ServerHello Random:", serverHello.Random)
+	// fmt.Println("ServerHello SessionID Length:", serverHello.SessionIDLength)
+	// fmt.Println("ServerHello SessionID:", serverHello.SessionID)
+	// fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
 	// fmt.Println("ServerHello CipherSuite:", serverHello.TLSExtensions)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare["KeyExchange"])
@@ -112,7 +96,7 @@ func main() {
 	if err != nil {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
-	fmt.Println("hash:", parseCipherSuite.Hash)
+	// fmt.Println("hash:", parseCipherSuite.Hash)
 
 	clientsecretkey := tls.KeyScheduleFactory(parseCipherSuite.Hash, clientHelloRaw, serverHelloRaw, clientkeyshare.sharedKey)
 
@@ -120,10 +104,9 @@ func main() {
 	// fmt.Println("encryptedMessage:", encryptedMessage)
 
 	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey)
-	fmt.Println("plaintext:", rawtext)
+	// fmt.Println("plaintext:", rawtext)
 
 	// handshakeをみて分ける関数が欲しい
 	cetificate := tls.ParseRawData(rawtext)
 	tls.CertificateFactory(cetificate)
-
 }

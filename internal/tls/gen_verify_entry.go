@@ -8,5 +8,8 @@ func GenCertificateEntry(certificateEntry []byte) []CertificateEntry {
 		entry, remain = ParseCertificateEntry(remain)
 		certificateList = append(certificateList, entry)
 	}
+	// var entry CertificateEntry
+	// entry, remain = ParseCertificateEntry(remain)
+	// certificateList = append(certificateList, entry)
 	return certificateList
 }

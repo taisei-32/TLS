@@ -66,15 +66,3 @@ func xorNonce(iv []byte, seq uint64) []byte {
 	}
 	return nonce
 }
-
-// func calculateNonce(iv []byte, sequenceNumber uint64) []byte {
-// 	sequenceNumberBytes := make([]byte, 8)
-// 	binary.BigEndian.PutUint64(sequenceNumberBytes, sequenceNumber)
-// 	paddedSequenceNumber := make([]byte, len(iv))
-// 	copy(paddedSequenceNumber[len(iv)-8:], sequenceNumberBytes)
-// 	nonce := make([]byte, len(iv))
-// 	for i := range iv {
-// 		nonce[i] = paddedSequenceNumber[i] ^ iv[i]
-// 	}
-// 	return nonce
-// }

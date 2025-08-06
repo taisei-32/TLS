@@ -1,10 +1,86 @@
 package tls
 
+import (
+	"github.com/taisei-32/TLS/internal/tls/common"
+)
+
 type CipherSuite struct {
 	Algorithm string
 	KeyLength string
 	Mode      string
 	Hash      string
+}
+
+func ParseServerHello(packet []byte) (ServerHello, []byte) {
+	contentType := packet[0:1]
+	length := packet[1:4]
+	version := packet[4:6]
+	random := packet[6:38]
+	sessionIDLength := packet[38]
+	sessionID := packet[39 : 39+BytesToint8(sessionIDLength)]
+	cipherSuiteStart := 39 + BytesToint8(sessionIDLength)
+	cipherSuite := packet[cipherSuiteStart : cipherSuiteStart+2]
+	compressionMethodStart := cipherSuiteStart + 2
+	compressionMethod := packet[compressionMethodStart]
+	extensionLengthStart := compressionMethodStart + 1
+	extensionLength := packet[extensionLengthStart : extensionLengthStart+2]
+	extension := packet[extensionLengthStart+2:]
+
+	return ServerHello{
+		ContentType:       contentType,
+		Length:            length,
+		Version:           version,
+		Random:            random,
+		SessionIDLength:   sessionIDLength,
+		SessionID:         sessionID,
+		CipherSuite:       cipherSuite,
+		CompressionMethod: compressionMethod,
+		ExtensionLength:   extensionLength,
+	}, extension
+}
+
+func ParseServerHelloExtension(extension []byte) []TLSExtensions {
+	start := 0
+	var tlsExtensions []TLSExtensions
+
+	// fmt.Println(extension)
+	for start+4 <= len(extension) {
+		extensionType := extension[start : start+2]
+		extensionLength := BytesToUint16(extension[start+2 : start+4])
+		// fmt.Println("keyshare:", uint16(common.KeyShare))
+		// fmt.Println("bytesToUint16:", BytesToUint16(extensionType))
+		if start+4+int(extensionLength) > len(extension) {
+			break
+		}
+		extensionValue := extension[start+4 : start+4+int(extensionLength)]
+
+		switch BytesToUint16(extensionType) {
+		case uint16(common.KeyShare):
+			if len(extensionValue) >= 36 {
+				value := map[string]interface{}{
+					"Group":             extensionValue[0:2],
+					"KeyExchangeLength": extensionValue[2:4],
+					"KeyExchange":       extensionValue[4:],
+				}
+				tlsExtensions = append(tlsExtensions, TLSExtensions{
+					Type:   extensionType,
+					Length: extension[start+2 : start+4],
+					Value:  value,
+				})
+			}
+		case uint16(common.SupportedVersions):
+			if len(extensionValue) >= 2 {
+				tlsExtensions = append(tlsExtensions, TLSExtensions{
+					Type:   extensionType,
+					Length: extension[start+2 : start+4],
+					Value:  extensionValue[0:2],
+				})
+			}
+		}
+		start += 4 + int(extensionLength)
+	}
+
+	return tlsExtensions
 }
 
 func ParseCipherSuite(cipherSuite []byte) CipherSuite {
