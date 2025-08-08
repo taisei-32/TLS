@@ -1,0 +1,196 @@
+package tls
+
+import (
+	"crypto/ecdh"
+	"hash"
+	"math/big"
+)
+
+type Key struct {
+	PrivateKey     *ecdh.PrivateKey
+	PublicKey      *ecdh.PublicKey
+	ServerHelloKey *ecdh.PublicKey
+	SharedKey      []byte
+	HashAlgorithm  string
+}
+
+type Record struct {
+	ContentType   []byte
+	LegacyVersion []byte
+	Length        []byte
+	Payload       []byte
+}
+
+type Handshake struct {
+	HandshakeType []byte
+	Length        [3]byte
+	msg           []byte
+}
+
+// Extensionsを []Extensionsの型にして、Toで変換するときに修正
+type ClientHello struct {
+	LegacyVersion            [2]byte
+	Random                   [32]byte //opaque
+	LegacySessionID          [32]byte //opaque
+	CipherSuites             []byte
+	LegacyCompressionMethods []byte // opaque
+	Extensions               []byte
+}
+
+type ClientHelloExtensionType struct {
+	ServerName          []byte
+	SupportedGroup      []byte
+	SignatureAlgorithms []byte
+	SupportedVersions   []byte
+	PskKeyExchangeModes []byte
+	KeyShare            []byte
+}
+
+type Extension struct {
+	ExtensionType   []byte
+	ExtensionLength []byte
+	ExtensionData   []byte
+}
+
+type ExtensionData struct {
+	ListLength []byte
+	List       []byte
+}
+
+type ServerName struct {
+	Extension
+}
+
+type ServerNameExtensionData struct {
+	ExtensionData
+}
+
+type ServerNameList struct {
+	NameType   []byte
+	NameLength []byte
+	Name       []byte
+}
+
+type SupportedGroup struct {
+	Extension
+}
+
+type SupportedGroupExtensionData struct {
+	ExtensionData
+}
+
+type SignatureAlgorithms struct {
+	Extension
+}
+
+type SignatureAlgorithmsExtensionData struct {
+	ExtensionData
+}
+
+type SupportedVersion struct {
+	Extension
+}
+
+type SupportedVersionExtensionData struct {
+	ExtensionData
+}
+
+type PskKeyExchangeModes struct {
+	Extension
+}
+
+type KeyShare struct {
+	Extension
+}
+
+type KeyShareExtensionData struct {
+	ExtensionData
+}
+
+type KeyShareList struct {
+	NamedGroup        []byte
+	KeyExchangeLength []byte
+	KeyExchange       []byte
+}
+
+type ServerHello struct {
+	ContentType       []byte
+	Length            []byte
+	Version           []byte
+	Random            []byte
+	SessionIDLength   byte
+	SessionID         []byte
+	CipherSuite       []byte
+	CompressionMethod byte
+	ExtensionLength   []byte
+	TLSExtensions     []TLSExtensions
+}
+
+type TLSExtensions struct {
+	Type   []byte
+	Length []byte
+	Value  interface{}
+}
+
+type CipherSuite struct {
+	Algorithm string
+	KeyLength string
+	Mode      string
+	Hash      string
+}
+
+type ApplicationData struct {
+	ContentType      byte
+	Version          []byte
+	Length           []byte
+	EncryptedContent []byte
+}
+
+type Certificate struct {
+	CertificateRequestContextLength uint8
+	CertificateRequestContext       []byte
+	CertificateListLength           uint
+	CertificateList                 []CertificateEntry
+}
+
+type CertificateEntry struct {
+	CertDataLength  uint //uin24
+	CertData        []byte
+	ExtensionLength []byte
+	Extensions      []Extension // uint16
+}
+
+type CertificateVerify struct {
+	SignatureScheme []byte
+	SignatureLength uint16
+	Signature       []byte
+}
+
+type Finished struct {
+	VerifyData []byte
+}
+
+type HkdfLabel struct {
+	Length        []byte
+	LabelLength   byte
+	Label         []byte
+	ContextLength byte
+	Context       []byte
+}
+
+type SecretKey struct {
+	EarlySecret     []byte
+	HandshakeSecret []byte
+	MasterSecret    []byte
+	Hash            func() hash.Hash
+	// BinderKey []byte
+	// ClientEarlyTrafficSecret []byte
+	// CleintEarlyTrafficSecret []byte
+	ClientHandshakeTrafficSecret []byte
+	ServerHandshakeTrafficSecret []byte
+	FinishedKey                  []byte
+}
+
+type RawSignature struct {
+	R, S *big.Int
+}

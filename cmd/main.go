@@ -31,10 +31,10 @@ func main() {
 	}
 	defer conn.Close()
 
-	clientHelloRaw := tls.ToClientHandshakeByteArr(tls.ClientHandshakeFactory(servername, clientkeyshare.PublicKey))
+	clientHelloRaw := tls.ToHandshakeByteArr(tls.ClientHandshakeFactory(servername, clientkeyshare.PublicKey))
 	clientRecordRaw := tls.ClientHelloRecordFactory(clientHelloRaw)
 
-	clientHello := tls.ToClientRecordByteArr(clientRecordRaw)
+	clientHello := tls.ToRecordByteArr(clientRecordRaw)
 
 	fmt.Println("ClientHello:", clientHello)
 

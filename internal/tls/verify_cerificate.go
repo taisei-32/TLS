@@ -5,28 +5,11 @@ import (
 	"fmt"
 )
 
-type Certificate struct {
-	CertificateRequestContextLength uint8
-	CertificateRequestContext       []byte
-	CertificateListLength           uint
-	CertificateList                 []CertificateEntry
-}
-
-type CertificateEntry struct {
-	CertDataLength  uint //uin24
-	CertData        []byte
-	ExtensionLength []byte
-	Extensions      []Extension // uint16
-}
-
-type Finished struct {
-	VerifyData []byte
-}
-
 func CertificateFactory(certificateHandshake Handshake) []byte {
 	certificateEntry := ParseCertificate(certificateHandshake)
-	VerifyCertificataionX509(certificateEntry.CertificateList)
+	certs := VerifyCertificataionX509(certificateEntry.CertificateList)
 	fmt.Println("証明書有効!!!")
+	VerifyCertificataionOCSP(certs)
 	return certificateEntry.CertificateList[0].CertData
 }
 
@@ -40,7 +23,7 @@ func CertificateFactory(certificateHandshake Handshake) []byte {
 // 		err
 // }
 
-func VerifyCertificataionX509(certificateList []CertificateEntry) {
+func VerifyCertificataionX509(certificateList []CertificateEntry) []*x509.Certificate {
 	certsEntry := make([]*x509.Certificate, len(certificateList))
 	for i, entry := range certificateList {
 		cert, err := x509.ParseCertificate(entry.CertData)
@@ -63,4 +46,9 @@ func VerifyCertificataionX509(certificateList []CertificateEntry) {
 		panic("failed to verify certificate: " + err.Error())
 	}
 	//todo 証明書の失効確認
+	return certsEntry
+}
+
+func VerifyCertificataionOCSP(certs []*x509.Certificate) error {
+
 }

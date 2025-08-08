@@ -4,13 +4,6 @@ import (
 	"github.com/taisei-32/TLS/internal/tls/common"
 )
 
-type CipherSuite struct {
-	Algorithm string
-	KeyLength string
-	Mode      string
-	Hash      string
-}
-
 func ParseHandshake(handshake []byte) Handshake {
 	handshakeType := handshake[:3]
 	handshakeLength := handshake[3:6]

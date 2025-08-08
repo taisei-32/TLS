@@ -7,14 +7,6 @@ import (
 	"golang.org/x/crypto/hkdf"
 )
 
-type HkdfLabel struct {
-	Length        []byte
-	LabelLength   byte
-	Label         []byte
-	ContextLength byte
-	Context       []byte
-}
-
 func HKDFExtract(hashFunc func() hash.Hash, salt []byte, secret []byte) []byte {
 	return hkdf.Extract(hashFunc, secret, salt)
 }

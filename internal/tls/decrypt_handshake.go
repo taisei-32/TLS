@@ -6,13 +6,6 @@ import (
 	"encoding/binary"
 )
 
-type ApplicationData struct {
-	ContentType      byte
-	Version          []byte
-	Length           []byte
-	EncryptedContent []byte
-}
-
 func DecryptHandshakeFactory(packet []byte, clientsecretkey SecretKey) ([]byte, error) {
 	applicationData := ApplicationData{
 		ContentType:      packet[0],

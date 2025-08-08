@@ -6,5 +6,6 @@
 - [x] Key
 - [ ] 証明書チェーン
 - [ ] 証明書の失効確認
-- [ ] sertificated_verify
-- [ ] finished
+- [x] sertificated_verify
+- [x] finished
+- [ ] Handshake毎に分ける

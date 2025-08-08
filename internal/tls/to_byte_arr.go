@@ -62,7 +62,7 @@ func ToClientByteArr(clienthello ClientHello) []byte {
 	return arr
 }
 
-func ToClientHandshakeByteArr(ext Handshake) []byte {
+func ToHandshakeByteArr(ext Handshake) []byte {
 	var arr []byte
 
 	arr = append(arr, ext.HandshakeType...)
@@ -72,7 +72,7 @@ func ToClientHandshakeByteArr(ext Handshake) []byte {
 	return arr
 }
 
-func ToClientRecordByteArr(ext RecordClientHello) []byte {
+func ToRecordByteArr(ext Record) []byte {
 	var arr []byte
 
 	arr = append(arr, ext.ContentType...)

@@ -2,31 +2,11 @@ package tls
 
 import (
 	"bytes"
-	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/x509"
 	"encoding/asn1"
 	"fmt"
-	"math/big"
 )
-
-type CertificateVerify struct {
-	SignatureScheme []byte
-	SignatureLength uint16
-	Signature       []byte
-}
-
-type Key struct {
-	PrivateKey     *ecdh.PrivateKey
-	PublicKey      *ecdh.PublicKey
-	ServerHelloKey *ecdh.PublicKey
-	SharedKey      []byte
-	HashAlgorithm  string
-}
-
-type RawSignature struct {
-	R, S *big.Int
-}
 
 func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, hashAlgorithm string, certData []byte) {
 	certificateVerifyRaw := ParseCertificateVerify(handshake.msg)

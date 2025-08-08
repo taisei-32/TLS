@@ -4,19 +4,6 @@ import (
 	"hash"
 )
 
-type SecretKey struct {
-	EarlySecret     []byte
-	HandshakeSecret []byte
-	MasterSecret    []byte
-	Hash            func() hash.Hash
-	// BinderKey []byte
-	// ClientEarlyTrafficSecret []byte
-	// CleintEarlyTrafficSecret []byte
-	ClientHandshakeTrafficSecret []byte
-	ServerHandshakeTrafficSecret []byte
-	FinishedKey                  []byte
-}
-
 func GenKeySchedule(sharedSecret []byte, hashFunc func() hash.Hash, transcriptHash []byte) SecretKey {
 	salt := make([]byte, hashFunc().Size())
 	psk := make([]byte, hashFunc().Size())

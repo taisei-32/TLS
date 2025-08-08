@@ -10,8 +10,8 @@ func GenTransScriptHash(ClientHello []byte, ServerHello []byte, hashFunc func() 
 }
 
 func GenTransScriptHashCertificate(ClientHello []byte, ServerHello []byte, EncryptedExtensions Handshake, Certificate Handshake, hashFunc func() hash.Hash) []byte {
-	EncryptedExtensionsRaw := ToClientHandshakeByteArr(EncryptedExtensions)
-	CertificateRaw := ToClientHandshakeByteArr(Certificate)
+	EncryptedExtensionsRaw := ToHandshakeByteArr(EncryptedExtensions)
+	CertificateRaw := ToHandshakeByteArr(Certificate)
 	transcript := append(ClientHello, ServerHello...)
 	transcript = append(transcript, EncryptedExtensionsRaw...)
 	transcript = append(transcript, CertificateRaw...)
@@ -21,9 +21,9 @@ func GenTransScriptHashCertificate(ClientHello []byte, ServerHello []byte, Encry
 }
 
 func GenTransScriptHashCertificateVerify(ClientHello []byte, ServerHello []byte, EncryptedExtensions Handshake, Certificate Handshake, CertificateVerify Handshake, hashFunc func() hash.Hash) []byte {
-	EncryptedExtensionsRaw := ToClientHandshakeByteArr(EncryptedExtensions)
-	CertificateRaw := ToClientHandshakeByteArr(Certificate)
-	CertificateVerifyRaw := ToClientHandshakeByteArr(CertificateVerify)
+	EncryptedExtensionsRaw := ToHandshakeByteArr(EncryptedExtensions)
+	CertificateRaw := ToHandshakeByteArr(Certificate)
+	CertificateVerifyRaw := ToHandshakeByteArr(CertificateVerify)
 	transcript := append(ClientHello, ServerHello...)
 	transcript = append(transcript, EncryptedExtensionsRaw...)
 	transcript = append(transcript, CertificateRaw...)

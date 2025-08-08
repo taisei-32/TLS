@@ -2,16 +2,6 @@ package tls
 
 import "crypto/ecdh"
 
-// Extensionsを []Extensionsの型にして、Toで変換するときに修正
-type ClientHello struct {
-	LegacyVersion            [2]byte
-	Random                   [32]byte //opaque
-	LegacySessionID          [32]byte //opaque
-	CipherSuites             []byte
-	LegacyCompressionMethods []byte // opaque
-	Extensions               []byte
-}
-
 func ClientHelloFactory(servername string, publickey *ecdh.PublicKey) ClientHello {
 	ExtensionsData := ToClientHelloExtensionTypeByteArr(ClientHelloExtensionFactory(publickey.Bytes(), servername))
 
