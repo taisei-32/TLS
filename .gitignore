@@ -32,4 +32,5 @@ go.work.sum
 # .vscode/
 .Ds_store
 a.txt
+a.py
 10to16.py

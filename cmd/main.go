@@ -3,18 +3,10 @@ package main
 import (
 	"crypto/ecdh"
 	"fmt"
-	"log"
 
 	"github.com/taisei-32/TLS/internal/tcp"
 	"github.com/taisei-32/TLS/internal/tls"
 )
-
-type KeyShare struct {
-	privateKey     *ecdh.PrivateKey
-	publicKey      *ecdh.PublicKey
-	serverHelloKey *ecdh.PublicKey
-	sharedKey      []byte
-}
 
 func main() {
 	private, public, err := tls.GenEcdhX25519()
@@ -22,9 +14,9 @@ func main() {
 		panic("Failed to generate ECDH key pair: " + err.Error())
 	}
 
-	clientkeyshare := KeyShare{
-		privateKey: private,
-		publicKey:  public,
+	clientkeyshare := tls.Key{
+		PrivateKey: private,
+		PublicKey:  public,
 	}
 
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
@@ -39,7 +31,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	clientHelloRaw := tls.ToClientHandshakeByteArr(tls.ClientHandshakeFactory(servername, clientkeyshare.publicKey))
+	clientHelloRaw := tls.ToClientHandshakeByteArr(tls.ClientHandshakeFactory(servername, clientkeyshare.PublicKey))
 	clientRecordRaw := tls.ClientHelloRecordFactory(clientHelloRaw)
 
 	clientHello := tls.ToClientRecordByteArr(clientRecordRaw)
@@ -65,13 +57,17 @@ func main() {
 	// }
 
 	// fmt.Println("Received response length:", n)
-	// fmt.Println("Received response:", response1[:n])
+	// fmt.Println("Received response:", response[:responseLength])
 
 	length := response[4]
+	fmt.Println("response", response[4])
 	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
-	serverHelloRaw := tls.ToSeverHelloByteArr(serverHello)
+	// serverHelloRaw := tls.ToSeverHelloByteArr(serverHello)
+	serverHelloRaw := response[5 : 5+length]
 	severhellokeyshare := serverHello.TLSExtensions[0].Value.(map[string]interface{})
 	parseCipherSuite := tls.ParseCipherSuite(serverHello.CipherSuite)
+
+	clientkeyshare.HashAlgorithm = parseCipherSuite.Hash
 
 	encryptedMessage := response[5+length+6 : responseLength]
 
@@ -81,24 +77,24 @@ func main() {
 	// fmt.Println("ServerHello Random:", serverHello.Random)
 	// fmt.Println("ServerHello SessionID Length:", serverHello.SessionIDLength)
 	// fmt.Println("ServerHello SessionID:", serverHello.SessionID)
-	// fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
+	fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
 	// fmt.Println("ServerHello CipherSuite:", serverHello.TLSExtensions)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare["KeyExchange"])
 	// fmt.Println("ServerHello Extensions:", serverHello.TLSExtensions[1])
 
-	clientkeyshare.serverHelloKey, err = ecdh.X25519().NewPublicKey(severhellokeyshare["KeyExchange"].([]byte))
+	clientkeyshare.ServerHelloKey, err = ecdh.X25519().NewPublicKey(severhellokeyshare["KeyExchange"].([]byte))
 	if err != nil {
-		log.Fatal("failed to parse peer public key:", err)
+		panic("Failed to regen ServerKey")
 	}
 
-	clientkeyshare.sharedKey, err = tls.GenerateSharedSecret(clientkeyshare.privateKey, clientkeyshare.serverHelloKey)
+	clientkeyshare.SharedKey, err = tls.GenerateSharedSecret(clientkeyshare.PrivateKey, clientkeyshare.ServerHelloKey)
 	if err != nil {
-		panic("Failed to generate ECDH key pair: " + err.Error())
+		panic("Failed to gen sharedKey")
 	}
 	// fmt.Println("hash:", parseCipherSuite.Hash)
 
-	clientsecretkey := tls.KeyScheduleFactory(parseCipherSuite.Hash, clientHelloRaw, serverHelloRaw, clientkeyshare.sharedKey)
+	clientsecretkey, hashFunc := tls.KeyScheduleFactory(clientkeyshare.HashAlgorithm, clientHelloRaw, serverHelloRaw, clientkeyshare.SharedKey)
 
 	// fmt.Println("clientSecretState:", clientsecretkey)
 	// fmt.Println("encryptedMessage:", encryptedMessage)
@@ -107,6 +103,10 @@ func main() {
 	// fmt.Println("plaintext:", rawtext)
 
 	// handshakeをみて分ける関数が欲しい
-	cetificate := tls.ParseRawData(rawtext)
-	tls.CertificateFactory(cetificate)
+	encryptedextensions, cetificate, certificateverify, _ := tls.ParseRawData(rawtext)
+	certData := tls.CertificateFactory(cetificate)
+
+	transscipthash := tls.GenTransScriptHash1(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, hashFunc)
+
+	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthash, clientkeyshare.HashAlgorithm, certData)
 }

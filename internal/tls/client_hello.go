@@ -20,7 +20,7 @@ func ClientHelloFactory(servername string, publickey *ecdh.PublicKey) ClientHell
 		LegacyVersion:            [2]byte{0x03, 0x03}, // TLS 1.3
 		Random:                   Random32Bytes(),
 		LegacySessionID:          Random32Bytes(),
-		CipherSuites:             []byte{0x13, 0x01, 0x13, 0x02, 0x13, 0x03},
+		CipherSuites:             []byte{0x13, 0x01},
 		LegacyCompressionMethods: []byte{0x00},
 		Extensions:               ExtensionsData,
 	}

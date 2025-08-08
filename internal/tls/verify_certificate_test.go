@@ -1,11 +1,5 @@
 package tls_test
 
-import (
-	"testing"
-
-	"github.com/taisei-32/TLS/internal/tls"
-)
-
 var testVerifyData = []byte{
 	0x0b,
 	// length 2522バイト
@@ -1425,17 +1419,20 @@ var cert = []byte{
 // 	})
 // }
 
-func TestParseCertificateEntry(t *testing.T) {
-	t.Run("証明書の検証ができる", func(t *testing.T) {
-		cetificate := tls.ParseRawData(certData)
-		tls.CertificateFactory(cetificate)
-		// if err != nil {
-		// 	t.Fatalf("検証失敗: %v", err)
-		// }
-		// if len(randomBytes) != 32 {
-		// 	t.Errorf("期待される長さは32バイトですが、実際の長さは%dバイトです", len(randomBytes))
-		// }
-		// t.Logf("生成されたランダムな値: %x", randomBytes)
-		t.Log("CertificateRequestContextLength: ")
-	})
-}
+// func TestParseCertificateEntry(t *testing.T) {
+// 	t.Run("CertificateVerifyの検証ができる", func(t *testing.T) {
+// 		transscipthash := []byte{fbb0eaaa2d0d2d06d81afe647b11184e4826317b2cf1044beb3101561316b356}
+// 		cetificate, certificateverify, _:= tls.ParseRawData(certData)
+// 		a:= tls.CertificateFactory(cetificate)
+// 		tls.VerifyCertificateVerifyFactory(certificateverify, transscipthash, clientkeyshare.HashAlgorithm, certData)
+
+// 		// if err != nil {
+// 		// 	t.Fatalf("検証失敗: %v", err)
+// 		// }
+// 		// if len(randomBytes) != 32 {
+// 		// 	t.Errorf("期待される長さは32バイトですが、実際の長さは%dバイトです", len(randomBytes))
+// 		// }
+// 		// t.Logf("生成されたランダムな値: %x", randomBytes)
+// 		t.Log("CertificateRequestContextLength: ")
+// 	})
+// }

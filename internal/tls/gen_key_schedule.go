@@ -2,7 +2,6 @@ package tls
 
 import (
 	"hash"
-	"log"
 )
 
 type SecretKey struct {
@@ -40,15 +39,15 @@ func GenKeySchedule(sharedSecret []byte, hashFunc func() hash.Hash, transcriptHa
 	}
 }
 
-func KeyScheduleFactory(hashAlgorithm string, clientHelloRaw []byte, serverHelloRaw []byte, sharedkey []byte) SecretKey {
+func KeyScheduleFactory(hashAlgorithm string, clientHelloRaw []byte, serverHelloRaw []byte, sharedkey []byte) (SecretKey, func() hash.Hash) {
 	hashFunc := GetHash(hashAlgorithm)
 	transscipthash := GenTransScriptHash(clientHelloRaw, serverHelloRaw, hashFunc)
-	log.Printf("transscipthash: %x\n", transscipthash)
+	// fmt.Printf("transscipthash: %x\n", transscipthash)
 	keyschedule := GenKeySchedule(sharedkey, hashFunc, transscipthash)
 	// if err != nil {
 	// 	panic("Failed to generate keyschedule: " + err.Error())
 	// }
 	keyschedule.Hash = hashFunc
 
-	return keyschedule
+	return keyschedule, hashFunc
 }

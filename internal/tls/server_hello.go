@@ -1,5 +1,7 @@
 package tls
 
+import "fmt"
+
 type ServerHello struct {
 	ContentType       []byte
 	Length            []byte
@@ -24,6 +26,7 @@ type TLSExtensions struct {
  * TODO: SessionIDのLengthに応じてoffsetを付ける必要があるが、ここでは一旦32バイトとして処理を進める
  */
 func ServerHelloFactory(packet []byte) (ServerHello, error) {
+	fmt.Println("SeverHello", packet)
 	serverHello, extension := ParseServerHello(packet)
 	tlsExtensions := ParseServerHelloExtension(extension)
 	serverHello.TLSExtensions = tlsExtensions

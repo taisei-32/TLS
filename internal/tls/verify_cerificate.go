@@ -19,22 +19,15 @@ type CertificateEntry struct {
 	Extensions      []Extension // uint16
 }
 
-// type CerExtensions
-
-type CertificateVerify struct {
-	SignatureScheme uint16
-	SignatureLength uint16
-	Signature       []byte
-}
-
 type Finished struct {
 	VerifyData []byte
 }
 
-func CertificateFactory(certificateHandshake Handshake) {
+func CertificateFactory(certificateHandshake Handshake) []byte {
 	certificateEntry := ParseCertificate(certificateHandshake)
 	VerifyCertificataionX509(certificateEntry.CertificateList)
 	fmt.Println("証明書有効!!!")
+	return certificateEntry.CertificateList[0].CertData
 }
 
 // func CertDataFactory(certData []byte) (string, string, string, string, string, error) {

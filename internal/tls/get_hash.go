@@ -11,7 +11,7 @@ func GetHash(hashAlgorithm string) func() hash.Hash {
 	case "SHA256":
 		return sha256.New
 	case "SHA384":
-		return sha512.New
+		return sha512.New384
 	}
 	panic("unsupported hash algorithm: " + hashAlgorithm)
 }
