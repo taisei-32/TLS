@@ -14,6 +14,7 @@ type SecretKey struct {
 	// CleintEarlyTrafficSecret []byte
 	ClientHandshakeTrafficSecret []byte
 	ServerHandshakeTrafficSecret []byte
+	FinishedKey                  []byte
 }
 
 func GenKeySchedule(sharedSecret []byte, hashFunc func() hash.Hash, transcriptHash []byte) SecretKey {
@@ -30,12 +31,15 @@ func GenKeySchedule(sharedSecret []byte, hashFunc func() hash.Hash, transcriptHa
 	clientHandshakeSecret := DeriveSecret(handshakeSecret, "c hs traffic", transcriptHash, hashFunc)
 	serverHandshakeSecret := DeriveSecret(handshakeSecret, "s hs traffic", transcriptHash, hashFunc)
 
+	finishedKey := HKDFExpandLabel(serverHandshakeSecret, "finished", []byte(""), hashFunc().Size(), hashFunc)
+
 	return SecretKey{
 		EarlySecret:                  earlySecret,
 		HandshakeSecret:              handshakeSecret,
 		ClientHandshakeTrafficSecret: clientHandshakeSecret,
 		ServerHandshakeTrafficSecret: serverHandshakeSecret,
 		Hash:                         hashFunc,
+		FinishedKey:                  finishedKey,
 	}
 }
 

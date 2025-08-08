@@ -28,25 +28,6 @@ type RawSignature struct {
 	R, S *big.Int
 }
 
-// func VerifyCertificateVerifyFactory(handshake Handshake, transscipthash []byte, hashAlgorithm string, certData []byte) {
-// 	certificateVerifyRaw := ParseCertificateVerify(handshake.msg)
-// 	// certificateVerifyRaw := parsecertificateVerify
-// 	signatureText := bytes.Repeat([]byte{0x20}, 64)
-// 	signatureText = append(signatureText, []byte("TLS 1.3, server CertificateVerify")...)
-// 	signatureText = append(signatureText, 0x00)
-// 	signatureText = append(signatureText, transscipthash...)
-// 	hashData := GenHash(hashAlgorithm, signatureText)
-// 	cert, _ := x509.ParseCertificate(certData)
-// 	pubKey, _ := cert.PublicKey.(*ecdsa.PublicKey)
-// 	var sig RawSignature
-// 	if _, err := asn1.Unmarshal(certificateVerifyRaw.Signature, &sig); err != nil {
-// 		panic(err)
-// 	}
-
-// 	valid := ecdsa.Verify(pubKey, hashData, sig.R, sig.S)
-// 	fmt.Println("CertificateVerify署名検証結果:", valid)
-// }
-
 func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, hashAlgorithm string, certData []byte) {
 	certificateVerifyRaw := ParseCertificateVerify(handshake.msg)
 
@@ -68,6 +49,6 @@ func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, 
 	if !isValid {
 		panic("signature was not verified")
 	} else {
-		fmt.Printf("signature was verified!!!")
+		fmt.Println("signature was verified!!!")
 	}
 }

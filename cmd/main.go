@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	servername := "www.itotai.com"
+	servername := "portfolio.malsuke.dev"
 	url := servername + ":443"
 	fmt.Println("hostname: ", url)
 	conn, err := tcp.Conn(url)
@@ -103,10 +103,13 @@ func main() {
 	// fmt.Println("plaintext:", rawtext)
 
 	// handshakeをみて分ける関数が欲しい
-	encryptedextensions, cetificate, certificateverify, _ := tls.ParseRawData(rawtext)
+	encryptedextensions, cetificate, certificateverify, finished := tls.ParseRawData(rawtext)
 	certData := tls.CertificateFactory(cetificate)
 
-	transscipthash := tls.GenTransScriptHash1(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, hashFunc)
+	transscipthashcertificate := tls.GenTransScriptHashCertificate(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, hashFunc)
 
-	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthash, clientkeyshare.HashAlgorithm, certData)
+	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthashcertificate, clientkeyshare.HashAlgorithm, certData)
+
+	transscipthashverify := tls.GenTransScriptHashCertificateVerify(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, certificateverify, hashFunc)
+	tls.VerifyFinishedFactory(finished, transscipthashverify, clientsecretkey.FinishedKey, hashFunc)
 }
