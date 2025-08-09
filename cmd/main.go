@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	servername := "portfolio.malsuke.dev"
+	servername := "badssl.com"
 	url := servername + ":443"
 	fmt.Println("hostname: ", url)
 	conn, err := tcp.Conn(url)
