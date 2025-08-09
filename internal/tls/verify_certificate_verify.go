@@ -11,13 +11,13 @@ import (
 func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, hashAlgorithm string, certData []byte) {
 	certificateVerifyRaw := ParseCertificateVerify(handshake.msg)
 
-	var textToVerify []byte
-	textToVerify = append(textToVerify, bytes.Repeat([]byte{0x20}, 64)...)
-	textToVerify = append(textToVerify, []byte("TLS 1.3, server CertificateVerify")...)
-	textToVerify = append(textToVerify, 0x00)
-	textToVerify = append(textToVerify, transcriptHash...)
+	var text []byte
+	text = append(text, bytes.Repeat([]byte{0x20}, 64)...)
+	text = append(text, []byte("TLS 1.3, server CertificateVerify")...)
+	text = append(text, 0x00)
+	text = append(text, transcriptHash...)
 
-	hashToVerify := GenHash(hashAlgorithm, textToVerify)
+	hashToVerify := GenHash(hashAlgorithm, text)
 
 	cert, _ := x509.ParseCertificate(certData)
 	publicKey := cert.PublicKey.(*ecdsa.PublicKey)

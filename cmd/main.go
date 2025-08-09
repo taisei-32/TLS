@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	servername := "badssl.com"
+	servername := "www.itotai.com"
 	url := servername + ":443"
 	fmt.Println("hostname: ", url)
 	conn, err := tcp.Conn(url)
@@ -38,6 +38,7 @@ func main() {
 
 	fmt.Println("ClientHello:", clientHello)
 
+	// これまとめたいなー
 	_, err = conn.Write(clientHello)
 	if err != nil {
 		panic("Failed to send ClientHello: " + err.Error())
@@ -111,5 +112,21 @@ func main() {
 	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthashcertificate, clientkeyshare.HashAlgorithm, certData)
 
 	transscipthashverify := tls.GenTransScriptHashCertificateVerify(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, certificateverify, hashFunc)
-	tls.VerifyFinishedFactory(finished, transscipthashverify, clientsecretkey.FinishedKey, hashFunc)
+	tls.VerifyFinishedFactory(finished, transscipthashverify, clientsecretkey.ServerFinishedKey, hashFunc)
+
+	transscipthashfinished := tls.GenTransScriptHashClientFinished(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, certificateverify, finished, hashFunc)
+	applicationKey := tls.GenKeyMasterSecret(clientsecretkey.SecretState, hashFunc, transscipthashfinished)
+	cipherText := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, applicationKey, hashFunc)
+
+	fmt.Println("cipherText:", cipherText)
+
+	_, err = conn.Write(cipherText)
+	if err != nil {
+		panic("Failed to send cipherText: " + err.Error())
+	}
+
+	fmt.Println("cipherText sent successfully")
+
+	response, responseLength = tls.GetResponse(conn)
+	fmt.Println("response:", response[:responseLength])
 }

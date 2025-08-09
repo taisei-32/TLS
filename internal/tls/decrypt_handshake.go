@@ -6,7 +6,7 @@ import (
 	"encoding/binary"
 )
 
-func DecryptHandshakeFactory(packet []byte, clientsecretkey SecretKey) ([]byte, error) {
+func DecryptHandshakeFactory(packet []byte, secretkey SecretKey) ([]byte, error) {
 	applicationData := ApplicationData{
 		ContentType:      packet[0],
 		Version:          packet[1:3],
@@ -19,8 +19,8 @@ func DecryptHandshakeFactory(packet []byte, clientsecretkey SecretKey) ([]byte, 
 		IvLen  = 12
 	)
 
-	key := HKDFExpandLabel(clientsecretkey.ServerHandshakeTrafficSecret, "key", nil, KeyLen, clientsecretkey.Hash)
-	iv := HKDFExpandLabel(clientsecretkey.ServerHandshakeTrafficSecret, "iv", nil, IvLen, clientsecretkey.Hash)
+	key := HKDFExpandLabel(secretkey.ServerHandshakeTrafficSecret, "key", nil, KeyLen, secretkey.Hash)
+	iv := HKDFExpandLabel(secretkey.ServerHandshakeTrafficSecret, "iv", nil, IvLen, secretkey.Hash)
 
 	recordHeader := []byte{applicationData.ContentType}
 	recordHeader = append(recordHeader, applicationData.Version...)
@@ -42,10 +42,6 @@ func DecryptHandshakeFactory(packet []byte, clientsecretkey SecretKey) ([]byte, 
 	}
 	return plaintext, nil
 }
-
-// func DecryptApplicationFactory{
-
-// }
 
 func xorNonce(iv []byte, seq uint64) []byte {
 	nonce := make([]byte, len(iv))

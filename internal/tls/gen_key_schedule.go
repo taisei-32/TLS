@@ -18,7 +18,8 @@ func GenKeySchedule(sharedSecret []byte, hashFunc func() hash.Hash, transcriptHa
 	clientHandshakeSecret := DeriveSecret(handshakeSecret, "c hs traffic", transcriptHash, hashFunc)
 	serverHandshakeSecret := DeriveSecret(handshakeSecret, "s hs traffic", transcriptHash, hashFunc)
 
-	finishedKey := HKDFExpandLabel(serverHandshakeSecret, "finished", []byte(""), hashFunc().Size(), hashFunc)
+	serverfinishedKey := HKDFExpandLabel(serverHandshakeSecret, "finished", []byte(""), hashFunc().Size(), hashFunc)
+	clientfinishedKey := HKDFExpandLabel(clientHandshakeSecret, "finished", []byte(""), hashFunc().Size(), hashFunc)
 
 	return SecretKey{
 		EarlySecret:                  earlySecret,
@@ -26,8 +27,16 @@ func GenKeySchedule(sharedSecret []byte, hashFunc func() hash.Hash, transcriptHa
 		ClientHandshakeTrafficSecret: clientHandshakeSecret,
 		ServerHandshakeTrafficSecret: serverHandshakeSecret,
 		Hash:                         hashFunc,
-		FinishedKey:                  finishedKey,
+		ServerFinishedKey:            serverfinishedKey,
+		ClientFinishedKey:            clientfinishedKey,
+		SecretState:                  SecretState,
 	}
+}
+
+func GenKeyMasterSecret(secretState []byte, hashFunc func() hash.Hash, transcriptHash []byte) []byte {
+	masterSecret := HKDFExtract(hashFunc, secretState, make([]byte, hashFunc().Size()))
+	clientApplicationTrafficSecret := DeriveSecret(masterSecret, "c ap traffic", transcriptHash, hashFunc)
+	return clientApplicationTrafficSecret
 }
 
 func KeyScheduleFactory(hashAlgorithm string, clientHelloRaw []byte, serverHelloRaw []byte, sharedkey []byte) (SecretKey, func() hash.Hash) {

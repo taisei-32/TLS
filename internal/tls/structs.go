@@ -57,54 +57,10 @@ type ExtensionData struct {
 	List       []byte
 }
 
-type ServerName struct {
-	Extension
-}
-
-type ServerNameExtensionData struct {
-	ExtensionData
-}
-
 type ServerNameList struct {
 	NameType   []byte
 	NameLength []byte
 	Name       []byte
-}
-
-type SupportedGroup struct {
-	Extension
-}
-
-type SupportedGroupExtensionData struct {
-	ExtensionData
-}
-
-type SignatureAlgorithms struct {
-	Extension
-}
-
-type SignatureAlgorithmsExtensionData struct {
-	ExtensionData
-}
-
-type SupportedVersion struct {
-	Extension
-}
-
-type SupportedVersionExtensionData struct {
-	ExtensionData
-}
-
-type PskKeyExchangeModes struct {
-	Extension
-}
-
-type KeyShare struct {
-	Extension
-}
-
-type KeyShareExtensionData struct {
-	ExtensionData
 }
 
 type KeyShareList struct {
@@ -181,14 +137,15 @@ type HkdfLabel struct {
 type SecretKey struct {
 	EarlySecret     []byte
 	HandshakeSecret []byte
-	MasterSecret    []byte
+	SecretState     []byte
 	Hash            func() hash.Hash
 	// BinderKey []byte
 	// ClientEarlyTrafficSecret []byte
 	// CleintEarlyTrafficSecret []byte
 	ClientHandshakeTrafficSecret []byte
 	ServerHandshakeTrafficSecret []byte
-	FinishedKey                  []byte
+	ServerFinishedKey            []byte
+	ClientFinishedKey            []byte
 }
 
 type RawSignature struct {

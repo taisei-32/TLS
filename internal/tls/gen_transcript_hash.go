@@ -32,3 +32,18 @@ func GenTransScriptHashCertificateVerify(ClientHello []byte, ServerHello []byte,
 	hash.Write(transcript)
 	return hash.Sum(nil)
 }
+
+func GenTransScriptHashClientFinished(ClientHello []byte, ServerHello []byte, EncryptedExtensions Handshake, Certificate Handshake, CertificateVerify Handshake, Finished Handshake, hashFunc func() hash.Hash) []byte {
+	EncryptedExtensionsRaw := ToHandshakeByteArr(EncryptedExtensions)
+	CertificateRaw := ToHandshakeByteArr(Certificate)
+	CertificateVerifyRaw := ToHandshakeByteArr(CertificateVerify)
+	FinishedRaw := ToHandshakeByteArr(Finished)
+	transcript := append(ClientHello, ServerHello...)
+	transcript = append(transcript, EncryptedExtensionsRaw...)
+	transcript = append(transcript, CertificateRaw...)
+	transcript = append(transcript, CertificateVerifyRaw...)
+	transcript = append(transcript, FinishedRaw...)
+	hash := hashFunc()
+	hash.Write(transcript)
+	return hash.Sum(nil)
+}
