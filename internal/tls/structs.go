@@ -135,17 +135,19 @@ type HkdfLabel struct {
 }
 
 type SecretKey struct {
-	EarlySecret     []byte
-	HandshakeSecret []byte
-	SecretState     []byte
-	Hash            func() hash.Hash
+	EarlySecret          []byte
+	HandshakeSecret      []byte
+	EarySecretState      []byte
+	HandshakeSecretState []byte
+	Hash                 func() hash.Hash
 	// BinderKey []byte
 	// ClientEarlyTrafficSecret []byte
-	// CleintEarlyTrafficSecret []byte
+	// ClientEarlyTrafficSecret []byte
 	ClientHandshakeTrafficSecret []byte
 	ServerHandshakeTrafficSecret []byte
 	ServerFinishedKey            []byte
 	ClientFinishedKey            []byte
+	MasterSecret                 []byte
 }
 
 type RawSignature struct {

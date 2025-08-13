@@ -46,7 +46,13 @@ func main() {
 
 	fmt.Println("ClientHello sent successfully")
 
-	response, responseLength := tls.GetResponse(conn)
+	response := make([]byte, 4096)
+	responseLength, err := conn.Read(response)
+	if err != nil {
+		panic("Failed to read response: " + err.Error())
+	}
+
+	// response, responseLength := tls.GetResponse(conn)
 
 	// fmt.Println("length:", responseLength)
 	// fmt.Println("Totale Received response:", response[:responseLength])
@@ -115,18 +121,37 @@ func main() {
 	tls.VerifyFinishedFactory(finished, transscipthashverify, clientsecretkey.ServerFinishedKey, hashFunc)
 
 	transscipthashfinished := tls.GenTransScriptHashClientFinished(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, certificateverify, finished, hashFunc)
-	applicationKey := tls.GenKeyMasterSecret(clientsecretkey.SecretState, hashFunc, transscipthashfinished)
-	cipherText := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, applicationKey, hashFunc)
+	clientApplicationKey, serverAppplicaionKey := tls.GenKeyMasterSecret(clientsecretkey.MasterSecret, hashFunc, transscipthashfinished)
+	// changeCipherSpecRaw := tls.GenChangeCipherSpec()
+	// finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientApplicationKey, hashFunc)
+	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey)
+	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey)
+	// request := append(finishedMessage, applicationMessage...)
 
-	fmt.Println("cipherText:", cipherText)
+	// changeCipherSpecRaw = append(changeCipherSpecRaw, cipherText...)
 
-	_, err = conn.Write(cipherText)
+	_, err = conn.Write(finishedMessage)
 	if err != nil {
-		panic("Failed to send cipherText: " + err.Error())
+		panic("Failed to send changeCipherSpecRaw: " + err.Error())
+	}
+	_, err = conn.Write(applicationMessage)
+	if err != nil {
+		panic("Failed to send changeCipherSpecRaw: " + err.Error())
 	}
 
-	fmt.Println("cipherText sent successfully")
+	fmt.Println("changeCipherSpecRaw sent successfully")
 
-	response, responseLength = tls.GetResponse(conn)
+	// response, responseLength = tls.GetResponse(conn)
+	// response := make([]byte, 4096)
+	responseLength, err = conn.Read(response)
+	if err != nil {
+		panic("Failed to read response: " + err.Error())
+	}
 	fmt.Println("response:", response[:responseLength])
+
+	encryptedMessage = response[:responseLength]
+	fmt.Println("encryptedMessage:", encryptedMessage)
+	decryptedMessage, err := tls.DecryptApplicationFactory(encryptedMessage, clientsecretkey, serverAppplicaionKey)
+	fmt.Println("decryptedMessage:", decryptedMessage)
+
 }
