@@ -4,6 +4,8 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"hash"
+
+	"github.com/taisei-32/TLS/internal/tls/common"
 )
 
 func GenEncrypted(plainText []byte, secretKey []byte, hashFunc func() hash.Hash) []byte {
@@ -24,7 +26,9 @@ func GenEncrypted(plainText []byte, secretKey []byte, hashFunc func() hash.Hash)
 		panic("Generate error GCM")
 	}
 	nonce := xorNonce(iv, 0)
-	cipherText := aesgcm.Seal(nil, nonce, plainText, nil)
+	aad := []byte{byte(common.Application), 0x03, 0x03}
+	aad = append(aad, Uint16ToBytes(uint16(len(plainText)+aesgcm.Overhead()))...)
+	cipherText := aesgcm.Seal(nil, nonce, plainText, aad)
 
 	return cipherText
 }
