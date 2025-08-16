@@ -44,11 +44,14 @@ func DecryptHandshakeFactory(packet []byte, secretkey SecretKey) ([]byte, error)
 }
 
 func DecryptApplicationFactory(packet []byte, secretkey SecretKey, serverApplicationKey []byte) ([]byte, error) {
+	Length := packet[3:5]
+	EncryptedContent := packet[5 : 5+BytesToUint16(Length)]
+
 	applicationData := ApplicationData{
 		ContentType:      packet[0],
 		Version:          packet[1:3],
-		Length:           packet[3:5],
-		EncryptedContent: packet[5:],
+		Length:           Length,
+		EncryptedContent: EncryptedContent,
 	}
 
 	const (
