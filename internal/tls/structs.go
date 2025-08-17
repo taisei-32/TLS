@@ -15,16 +15,16 @@ type Key struct {
 }
 
 type Record struct {
-	ContentType   []byte
-	LegacyVersion []byte
-	Length        []byte
+	ContentType   byte
+	LegacyVersion [2]byte
+	Length        uint16
 	Payload       []byte
 }
 
 type Handshake struct {
-	HandshakeType []byte
-	Length        [3]byte
-	msg           []byte
+	HandshakeType byte
+	Length        int
+	Msg           []byte
 }
 
 // Extensionsを []Extensionsの型にして、Toで変換するときに修正
