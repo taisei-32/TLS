@@ -1,8 +1,19 @@
 package tls
 
-import "github.com/taisei-32/TLS/internal/tls/common"
+import (
+	"fmt"
 
-var data = []byte("GET / HTTP/1.1\r\n\r\n")
+	"github.com/taisei-32/TLS/internal/tls/common"
+)
+
+var serverName = "www.itotai.com"
+
+var data = []byte(fmt.Sprintf(
+	"GET / HTTP/1.1\r\n"+
+		"Host: %s\r\n"+
+		"\r\n",
+	serverName,
+))
 
 func ApplicationFactory(secretKey SecretKey, clientApplicationKey []byte) []byte {
 	return ToRecordByteArr(ApplicationRecordFactory(secretKey, clientApplicationKey))
