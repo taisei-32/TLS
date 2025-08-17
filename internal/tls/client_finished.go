@@ -27,9 +27,9 @@ func ClientFinishedFactory(transcriptHash []byte, secretKey SecretKey) []byte {
 
 func ClientFinishedRecord(cipherText []byte) Record {
 	return Record{
-		ContentType:   []byte{byte(common.Application)},
-		LegacyVersion: []byte{0x03, 0x03},
-		Length:        Uint16ToBytes(uint16((len(cipherText)))),
+		ContentType:   byte(common.Application),
+		LegacyVersion: [2]byte{0x03, 0x03},
+		Length:        uint16((len(cipherText))),
 		Payload:       cipherText,
 	}
 }
@@ -37,8 +37,8 @@ func ClientFinishedRecord(cipherText []byte) Record {
 func ClientFinishedHandshake(hmac []byte) Handshake {
 	msg := hmac
 	return Handshake{
-		HandshakeType: []byte{byte(common.Finished)},
-		Length:        Uint24ToBytes(uint32((len(msg)))),
-		msg:           msg,
+		HandshakeType: byte(common.Finished),
+		Length:        uint32((len(msg))),
+		Msg:           msg,
 	}
 }

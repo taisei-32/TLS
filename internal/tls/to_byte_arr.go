@@ -62,23 +62,25 @@ func ToClientByteArr(clienthello ClientHello) []byte {
 	return arr
 }
 
-func ToHandshakeByteArr(ext Handshake) []byte {
+func ToRecordByteArr(ext Record) []byte {
 	var arr []byte
 
-	arr = append(arr, ext.HandshakeType...)
-	arr = append(arr, ext.Length[:]...)
-	arr = append(arr, ext.msg...)
+	arr = append(arr, ext.ContentType)
+	arr = append(arr, ext.LegacyVersion[:]...)
+	arr = append(arr, Uint16ToBytes(ext.Length)...)
+	arr = append(arr, ext.Payload...)
 
 	return arr
 }
 
-func ToRecordByteArr(ext Record) []byte {
+func ToHandshakeByteArr(ext Handshake) []byte {
 	var arr []byte
 
-	arr = append(arr, ext.ContentType...)
-	arr = append(arr, ext.LegacyVersion...)
-	arr = append(arr, ext.Length...)
-	arr = append(arr, ext.Payload...)
+	length := Uint24ToBytes(ext.Length)
+
+	arr = append(arr, ext.HandshakeType)
+	arr = append(arr, length[:]...)
+	arr = append(arr, ext.Msg...)
 
 	return arr
 }

@@ -68,6 +68,7 @@ func main() {
 
 	length := response[4]
 	fmt.Println("response", response[4])
+	fmt.Println("response", response)
 	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
 	// serverHelloRaw := tls.ToSeverHelloByteArr(serverHello)
 	serverHelloRaw := response[5 : 5+length]

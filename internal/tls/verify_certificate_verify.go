@@ -9,7 +9,7 @@ import (
 )
 
 func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, hashAlgorithm string, certData []byte) {
-	certificateVerifyRaw := ParseCertificateVerify(handshake.msg)
+	certificateVerifyRaw := ParseCertificateVerify(handshake.Msg)
 
 	var text []byte
 	text = append(text, bytes.Repeat([]byte{0x20}, 64)...)

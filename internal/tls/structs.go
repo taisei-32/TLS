@@ -23,7 +23,7 @@ type Record struct {
 
 type Handshake struct {
 	HandshakeType byte
-	Length        int
+	Length        uint32
 	Msg           []byte
 }
 

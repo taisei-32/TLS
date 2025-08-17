@@ -10,7 +10,7 @@ func VerifyFinishedFactory(finised Handshake, transcriptHash []byte, finishedKey
 	hmac := GenHmac(hashFunc, finishedKey, transcriptHash)
 	// fmt.Println("hmac:", hmac)
 	// fmt.Println("finished:", finised.msg)
-	if bytes.Equal(hmac, finised.msg) {
+	if bytes.Equal(hmac, finised.Msg) {
 		fmt.Println("finished was verified")
 	} else {
 		panic("finished was not verified")

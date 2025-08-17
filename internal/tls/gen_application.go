@@ -23,9 +23,9 @@ func ApplicationRecordFactory(secretKey SecretKey, clientApplicationKey []byte) 
 	data = append(data, []byte{byte(common.Application)}...)
 	encryptedData := GenEncrypted(data, clientApplicationKey, secretKey.Hash)
 	return Record{
-		ContentType:   []byte{byte(common.Application)},
-		LegacyVersion: []byte{0x03, 0x03},
-		Length:        Uint16ToBytes(uint16((len(encryptedData)))),
+		ContentType:   byte(common.Application),
+		LegacyVersion: [2]byte{0x03, 0x03},
+		Length:        uint16((len(encryptedData))),
 		Payload:       encryptedData,
 	}
 }
