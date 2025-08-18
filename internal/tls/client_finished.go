@@ -8,12 +8,12 @@ import (
 
 // var data = []byte("GET / HTTP/1.1\r\n\r\n")
 
-func ClientFinishedFactory(transcriptHash []byte, secretKey SecretKey) []byte {
+func ClientFinishedFactory(transcriptHash []byte, secretKey SecretKey, cipherSuite []byte) []byte {
 
 	verify_data := GenHmac(secretKey.Hash, secretKey.ClientFinishedKey, transcriptHash)
 	handshakeText := ToHandshakeByteArr(ClientFinishedHandshake(verify_data))
 	encrypted_payload := append(handshakeText, []byte{byte(common.Handshake)}...)
-	cipherText := GenEncrypted(encrypted_payload, secretKey.ClientHandshakeTrafficSecret, secretKey.Hash)
+	cipherText := GenEncrypted(encrypted_payload, secretKey.ClientHandshakeTrafficSecret, secretKey.Hash, cipherSuite)
 	record := ToRecordByteArr(ClientFinishedRecord(cipherText))
 	fmt.Printf("client finished:%x\n", ToRecordByteArr(ClientFinishedRecord(handshakeText)))
 

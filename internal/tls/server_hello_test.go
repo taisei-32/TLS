@@ -34,7 +34,7 @@ func TestParseServerHello(t *testing.T) {
 			t.Errorf("期待されるランダム値の長さは32バイトですが、実際の長さは%dバイトです", len(sh.Random))
 		}
 
-		if !bytes.Equal(sh.CipherSuite, common.TLS_AES_256_GCM_SHA384) {
+		if !bytes.Equal(sh.CipherSuite, tls.Uint16ToBytes(uint16(common.TLS_AES_256_GCM_SHA384))) {
 			t.Errorf("期待されるCipherSuiteは %x ですが、実際は %x です", common.TLS_AES_256_GCM_SHA384, sh.CipherSuite)
 		}
 

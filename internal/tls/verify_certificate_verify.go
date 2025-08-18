@@ -2,13 +2,16 @@ package tls
 
 import (
 	"bytes"
+	"crypto"
 	"crypto/ecdsa"
+	"crypto/rsa"
 	"crypto/x509"
 	"encoding/asn1"
 	"fmt"
+	"strings"
 )
 
-func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, hashAlgorithm string, certData []byte) {
+func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, certData []byte) {
 	certificateVerifyRaw := ParseCertificateVerify(handshake.msg)
 
 	var text []byte
@@ -17,18 +20,43 @@ func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, 
 	text = append(text, 0x00)
 	text = append(text, transcriptHash...)
 
+	cert, _ := x509.ParseCertificate(certData)
+	// fmt.Println("cert", cert)
+	certAlgorithm := cert.SignatureAlgorithm.String()
+	var hashAlgorithm string
+	if strings.Split(certAlgorithm, "-")[0] == "SHA256" || strings.Split(certAlgorithm, "-")[0] == "SHA3384" {
+		hashAlgorithm = strings.Split(certAlgorithm, "-")[0]
+	} else {
+		hashAlgorithm = strings.Split(certAlgorithm, "-")[1]
+	}
 	hashToVerify := GenHash(hashAlgorithm, text)
 
-	cert, _ := x509.ParseCertificate(certData)
-	publicKey := cert.PublicKey.(*ecdsa.PublicKey)
-
-	var sig RawSignature
-	asn1.Unmarshal(certificateVerifyRaw.Signature, &sig)
-
-	isValid := ecdsa.Verify(publicKey, hashToVerify[:], sig.R, sig.S)
-	if !isValid {
-		panic("signature was not verified")
-	} else {
-		fmt.Println("signature was verified!!!")
+	switch pub := cert.PublicKey.(type) {
+	case *ecdsa.PublicKey:
+		print("ECDSA")
+		publicKey := cert.PublicKey.(*ecdsa.PublicKey)
+		var sig RawSignature
+		asn1.Unmarshal(certificateVerifyRaw.Signature, &sig)
+		isValid := ecdsa.Verify(publicKey, hashToVerify[:], sig.R, sig.S)
+		if !isValid {
+			panic("signature was not verified")
+		} else {
+			fmt.Println("signature was verified!!!")
+		}
+	case *rsa.PublicKey:
+		fmt.Println("RSA")
+		var hash crypto.Hash
+		switch hashAlgorithm {
+		case "SHA256":
+			hash = crypto.SHA256
+		case "SHA384":
+			hash = crypto.SHA384
+		default:
+			panic("unsupported hash algorithm RSA")
+		}
+		err := rsa.VerifyPSS(pub, hash, hashToVerify, certificateVerifyRaw.Signature, nil)
+		if err != nil {
+			panic("RSA signature was not verified")
+		}
 	}
 }
