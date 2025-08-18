@@ -1,6 +1,7 @@
 package tls
 
 import (
+	"fmt"
 	"hash"
 )
 
@@ -43,6 +44,7 @@ func GenKeyMasterSecret(masterSecret []byte, hashFunc func() hash.Hash, transcri
 }
 
 func KeyScheduleFactory(hashAlgorithm string, clientHelloRaw []byte, serverHelloRaw []byte, sharedkey []byte) (SecretKey, func() hash.Hash) {
+	fmt.Println("hashAlgorithm:", hashAlgorithm)
 	hashFunc := GetHash(hashAlgorithm)
 	transscipthash := GenTransScriptHash(clientHelloRaw, serverHelloRaw, hashFunc)
 	// fmt.Printf("transscipthash: %x\n", transscipthash)

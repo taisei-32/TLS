@@ -1,6 +1,9 @@
 package tls
 
 import (
+	"fmt"
+	"log"
+
 	"github.com/taisei-32/TLS/internal/tls/common"
 )
 
@@ -95,27 +98,56 @@ func ParseServerHelloExtension(extension []byte) []TLSExtensions {
 }
 
 func ParseCipherSuite(cipherSuite []byte) CipherSuite {
-	// if cipherSuite[1] == byte{1} {
-	// 	return
-	// }
-	// parts := strings.Split(string(cipherSuite), "_")
-	return CipherSuite{
-		Algorithm: "AES",
-		KeyLength: "128",
-		Mode:      "GCM",
-		Hash:      "SHA256",
+	switch BytesToUint16(cipherSuite) {
+	case uint16(common.TLS_AES_128_GCM_SHA256):
+		fmt.Println("cipherSuite", "TLS_AES_128_GCM_SHA256")
+		return CipherSuite{
+			Algorithm: "AES",
+			KeyLength: "128",
+			Mode:      "GCM",
+			Hash:      "SHA256",
+		}
+	case uint16(common.TLS_AES_256_GCM_SHA384):
+		fmt.Println("cipherSuite", "TLS_AES_256_GCM_SHA384")
+		return CipherSuite{
+			Algorithm: "AES",
+			KeyLength: "256",
+			Mode:      "GCM",
+			Hash:      "SHA384",
+		}
+	case uint16(common.TLS_CHACHA20_POLY1305_SHA256):
+		fmt.Println("cipherSuite", "TLS_AES_128_GCM_SHA256")
+		return CipherSuite{
+			Algorithm: "CHACHA20",
+			Mode:      "POLY1305",
+			Hash:      "SHA256",
+		}
+	default:
+		return CipherSuite{
+			Algorithm: "error",
+		}
 	}
 }
 
 func ParseRawData(rawData []byte) (Handshake, Handshake, Handshake, Handshake) {
+	var certificateStart int
+	var certificateVerifyStart int
+	var finishedStart int
+
 	encryptedExtensionsType := rawData[0]
+	// log.Println("encryptedExtensionsType:", encryptedExtensionsType)
 	encryptedExtensionsLength := rawData[1:4]
 	// log.Println("encryptedExtensionsLength:", encryptedExtensionsLength)
 	encryptedExtensionsEnd := 4 + BytesToInt24([3]byte(encryptedExtensionsLength))
 	// log.Println("encryptedExtensionsEnd:", encryptedExtensionsEnd)
 	encryptedExtensionsMsg := rawData[4:encryptedExtensionsEnd]
 	// log.Println("encryptedExtensionsMsg:", encryptedExtensionsMsg)
-	certificateStart := encryptedExtensionsEnd
+
+	if rawData[encryptedExtensionsEnd] == byte(22) {
+		certificateStart = encryptedExtensionsEnd + 1
+	} else {
+		certificateStart = encryptedExtensionsEnd
+	}
 	// log.Println("certificateStart:", certificateStart)
 	certificateType := rawData[certificateStart]
 	// log.Println("certificateType:", certificateType)
@@ -126,12 +158,22 @@ func ParseRawData(rawData []byte) (Handshake, Handshake, Handshake, Handshake) {
 	certificateMsg := rawData[certificateStart+4 : certificateEnd]
 	// log.Println("certificateMsg:", certificateMsg)
 
-	certificateVerifyStart := certificateEnd
+	if rawData[certificateEnd] == byte(22) {
+		certificateVerifyStart = certificateEnd + 1
+	} else {
+		certificateVerifyStart = certificateEnd
+	}
 	certificateVerifyType := rawData[certificateVerifyStart]
 	certificateVerifyLength := rawData[certificateVerifyStart+1 : certificateVerifyStart+4]
 	certificateVerifyEnd := certificateVerifyStart + 4 + BytesToInt24([3]byte(certificateVerifyLength))
 	certificateVerifyMsg := rawData[certificateVerifyStart+4 : certificateVerifyEnd]
-	finishedStart := certificateVerifyEnd
+	log.Println("certificateVerifyMsg:", certificateVerifyMsg)
+
+	if rawData[encryptedExtensionsEnd] == byte(22) {
+		finishedStart = certificateVerifyEnd + 1
+	} else {
+		finishedStart = certificateVerifyEnd
+	}
 	finishedType := rawData[finishedStart]
 	finishedLength := rawData[finishedStart+1 : finishedStart+4]
 	finishedEnd := finishedStart + 4 + BytesToInt24([3]byte(finishedLength))

@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	servername := "www.itotai.com"
+	servername := "www.city.kumamoto.jp"
 	url := servername + ":443"
 	fmt.Println("hostname: ", url)
 	conn, err := tcp.Conn(url)
@@ -52,24 +52,12 @@ func main() {
 		panic("Failed to read response: " + err.Error())
 	}
 
-	// response, responseLength := tls.GetResponse(conn)
-
-	// fmt.Println("length:", responseLength)
-	// fmt.Println("Totale Received response:", response[:responseLength])
-
-	// response1 := make([]byte, 4096)
-	// n, err := conn.Read(response1)
-	// if err != nil {
-	// 	panic("Failed to read response: " + err.Error())
-	// }
-
-	// fmt.Println("Received response length:", n)
-	// fmt.Println("Received response:", response[:responseLength])
-
 	length := response[4]
-	fmt.Println("response", response[4])
+	fmt.Println("response length", response[4])
+	fmt.Println("Received response:", response[:responseLength])
 	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
 	// serverHelloRaw := tls.ToSeverHelloByteArr(serverHello)
+	fmt.Println("serverHello", serverHello)
 	serverHelloRaw := response[5 : 5+length]
 	severhellokeyshare := serverHello.TLSExtensions[0].Value.(map[string]interface{})
 	parseCipherSuite := tls.ParseCipherSuite(serverHello.CipherSuite)
@@ -84,7 +72,7 @@ func main() {
 	// fmt.Println("ServerHello Random:", serverHello.Random)
 	// fmt.Println("ServerHello SessionID Length:", serverHello.SessionIDLength)
 	// fmt.Println("ServerHello SessionID:", serverHello.SessionID)
-	fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
+	// fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
 	// fmt.Println("ServerHello CipherSuite:", serverHello.TLSExtensions)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare["KeyExchange"])
@@ -104,9 +92,12 @@ func main() {
 	clientsecretkey, hashFunc := tls.KeyScheduleFactory(clientkeyshare.HashAlgorithm, clientHelloRaw, serverHelloRaw, clientkeyshare.SharedKey)
 
 	// fmt.Println("clientSecretState:", clientsecretkey)
-	// fmt.Println("encryptedMessage:", encryptedMessage)
+	fmt.Println("encryptedMessage:", encryptedMessage)
+	copyCipherSuite := make([]byte, len(serverHello.CipherSuite))
+	copy(copyCipherSuite, serverHello.CipherSuite)
+	clientsecretkey.CipherSuite = copyCipherSuite
 
-	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey)
+	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey, clientsecretkey.CipherSuite)
 	// fmt.Println("plaintext:", rawtext)
 
 	// handshakeをみて分ける関数が欲しい
@@ -115,7 +106,7 @@ func main() {
 
 	transscipthashcertificate := tls.GenTransScriptHashCertificate(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, hashFunc)
 
-	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthashcertificate, clientkeyshare.HashAlgorithm, certData)
+	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthashcertificate, certData)
 
 	transscipthashverify := tls.GenTransScriptHashCertificateVerify(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, certificateverify, hashFunc)
 	tls.VerifyFinishedFactory(finished, transscipthashverify, clientsecretkey.ServerFinishedKey, hashFunc)
@@ -124,8 +115,8 @@ func main() {
 	clientApplicationKey, serverAppplicaionKey := tls.GenKeyMasterSecret(clientsecretkey.MasterSecret, hashFunc, transscipthashfinished)
 	// changeCipherSpecRaw := tls.GenChangeCipherSpec()
 	// finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientApplicationKey, hashFunc)
-	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey)
-	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey)
+	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientsecretkey.CipherSuite)
+	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey, clientsecretkey.CipherSuite, servername)
 	// request := append(finishedMessage, applicationMessage...)
 
 	// changeCipherSpecRaw = append(changeCipherSpecRaw, cipherText...)
@@ -139,19 +130,15 @@ func main() {
 		panic("Failed to send changeCipherSpecRaw: " + err.Error())
 	}
 
-	fmt.Println("changeCipherSpecRaw sent successfully")
-
-	// response, responseLength = tls.GetResponse(conn)
-	// response := make([]byte, 4096)
 	responseLength, err = conn.Read(response)
 	if err != nil {
 		panic("Failed to read response: " + err.Error())
 	}
-	fmt.Println("response:", response[:responseLength])
+	// fmt.Println("response:", response[:responseLength])
 
 	encryptedMessage = response[:responseLength]
-	fmt.Println("encryptedMessage:", encryptedMessage)
-	decryptedMessage, err := tls.DecryptApplicationFactory(encryptedMessage, clientsecretkey, serverAppplicaionKey)
+	// fmt.Println("encryptedMessage:", encryptedMessage)
+	decryptedMessage, err := tls.DecryptApplicationFactory(encryptedMessage, clientsecretkey, serverAppplicaionKey, clientsecretkey.CipherSuite)
 	fmt.Println("decryptedMessage:", decryptedMessage)
 
 }
