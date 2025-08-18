@@ -8,7 +8,15 @@ func ParseRecord(recordBytes []byte) Record {
 	contentType := recordBytes[0]
 	legacyVersion := recordBytes[1:3]
 	lengthInt := BytesToUint16(recordBytes[3:5])
-	payload := recordBytes[5 : 5+lengthInt]
+	payloadBytes := recordBytes[5:]
+	var payload Handshake
+
+	switch contentType {
+	case byte(common.Handshake):
+		payload = ParseHandshake(payloadBytes)
+	default:
+		panic("unsupported contentType")
+	}
 
 	return Record{
 		ContentType:   contentType,
@@ -18,18 +26,38 @@ func ParseRecord(recordBytes []byte) Record {
 	}
 }
 
-func ParseHandshake(handshake []byte) Handshake {
-	handshakeType := handshake[0]
-	length := BytesToInt24([3]byte(handshake[1:4]))
-	msg := handshake[4 : 4+length]
+func ParseA(Bytes []byte) A {
+	return A{
+		Msg: Bytes,
+	}
+}
+
+func ParseHandshake(handshakeBytes []byte) Handshake {
+	handshakeType := handshakeBytes[0]
+	length := BytesToInt24([3]byte(handshakeBytes[1:4]))
+	msgBytes := handshakeBytes[4 : 4+length]
+
+	var msg HandshakeMessage
+
+	switch handshakeType {
+	// case byte(common.ClientHello):
+	//     body= ParseClientHello(msgBytes)
+	case byte(common.ServerHello):
+		msg = ParseServerHello(msgBytes)
+	// case byte(common.Certificate):
+	// 	msg = ParseCertificate(msgBytes)
+	default:
+		panic("unsupported HandshakeType")
+	}
+
 	return Handshake{
-		HandshakeType: byte(handshakeType),
+		HandshakeType: handshakeType,
 		Length:        uint32(length),
 		Msg:           msg,
 	}
 }
 
-func ParseServerHello(packet []byte) (ServerHello, []byte) {
+func ParseServerHello(packet []byte) ServerHello {
 	contentType := packet[0:1]
 	length := packet[1:4]
 	version := packet[4:6]
@@ -43,6 +71,7 @@ func ParseServerHello(packet []byte) (ServerHello, []byte) {
 	extensionLengthStart := compressionMethodStart + 1
 	extensionLength := packet[extensionLengthStart : extensionLengthStart+2]
 	extension := packet[extensionLengthStart+2:]
+	tlsExtensions := ParseServerHelloExtension(extension)
 
 	return ServerHello{
 		ContentType:       contentType,
@@ -54,7 +83,8 @@ func ParseServerHello(packet []byte) (ServerHello, []byte) {
 		CipherSuite:       cipherSuite,
 		CompressionMethod: compressionMethod,
 		ExtensionLength:   extensionLength,
-	}, extension
+		TLSExtensions:     tlsExtensions,
+	}
 }
 
 func ParseServerHelloExtension(extension []byte) []TLSExtensions {
@@ -122,52 +152,70 @@ func ParseCipherSuite(cipherSuite []byte) CipherSuite {
 }
 
 func ParseRawData(rawData []byte) (Handshake, Handshake, Handshake, Handshake) {
-	encryptedExtensionsType := rawData[0]
+	encryptedExtensionsHandshakeType := rawData[0]
 	encryptedExtensionsLength := BytesToInt24([3]byte(rawData[1:4]))
-	// log.Println("encryptedExtensionsLength:", encryptedExtensionsLength)
 	encryptedExtensionsEnd := 4 + encryptedExtensionsLength
-	// log.Println("encryptedExtensionsEnd:", encryptedExtensionsEnd)
-	encryptedExtensionsMsg := rawData[4:encryptedExtensionsEnd]
-	// log.Println("encryptedExtensionsMsg:", encryptedExtensionsMsg)
+	encryptedExtensionsMsg := ParseEncryptedExtensions(rawData[4:encryptedExtensionsEnd])
+
 	certificateStart := encryptedExtensionsEnd
-	// log.Println("certificateStart:", certificateStart)
-	certificateType := rawData[certificateStart]
-	// log.Println("certificateType:", certificateType)
+	certificateHandshakeType := rawData[certificateStart]
 	certificateLength := BytesToInt24([3]byte(rawData[certificateStart+1 : certificateStart+4]))
-	// log.Println("certificateLength:", certificateLength)
 	certificateEnd := certificateStart + 4 + certificateLength
-	// log.Println("certificateEnd:", certificateEnd)
-	certificateMsg := rawData[certificateStart+4 : certificateEnd]
-	// log.Println("certificateMsg:", certificateMsg)
+	certificateMsg := Parsecertificate(rawData[certificateStart+4 : certificateEnd])
 
 	certificateVerifyStart := certificateEnd
-	certificateVerifyType := rawData[certificateVerifyStart]
+	certificateVerifyHandshakeType := rawData[certificateVerifyStart]
 	certificateVerifyLength := BytesToInt24([3]byte(rawData[certificateVerifyStart+1 : certificateVerifyStart+4]))
 	certificateVerifyEnd := certificateVerifyStart + 4 + certificateVerifyLength
-	certificateVerifyMsg := rawData[certificateVerifyStart+4 : certificateVerifyEnd]
+	certificateVerifyMsg := ParsecertificateVerify(rawData[certificateVerifyStart+4 : certificateVerifyEnd])
+
 	finishedStart := certificateVerifyEnd
-	finishedType := rawData[finishedStart]
+	finishedHandshakeType := rawData[finishedStart]
 	finishedLength := BytesToInt24([3]byte(rawData[finishedStart+1 : finishedStart+4]))
 	finishedEnd := finishedStart + 4 + finishedLength
-	finishedMsg := rawData[finishedStart+4 : finishedEnd]
+	finishedMsg := ParseFinished(rawData[finishedStart+4 : finishedEnd])
 
 	return Handshake{
-			HandshakeType: byte(encryptedExtensionsType),
+			HandshakeType: byte(encryptedExtensionsHandshakeType),
 			Length:        uint32(encryptedExtensionsLength),
 			Msg:           encryptedExtensionsMsg,
 		}, Handshake{
-			HandshakeType: byte(certificateType),
+			HandshakeType: byte(certificateHandshakeType),
 			Length:        uint32(certificateLength),
 			Msg:           certificateMsg,
 		}, Handshake{
-			HandshakeType: byte(certificateVerifyType),
+			HandshakeType: byte(certificateVerifyHandshakeType),
 			Length:        uint32(certificateVerifyLength),
 			Msg:           certificateVerifyMsg,
 		}, Handshake{
-			HandshakeType: byte(finishedType),
+			HandshakeType: byte(finishedHandshakeType),
 			Length:        uint32(finishedLength),
 			Msg:           finishedMsg,
 		}
+}
+
+func ParseEncryptedExtensions(encryptedExtensions []byte) EncryptedExtensions {
+	return EncryptedExtensions{
+		Msg: encryptedExtensions,
+	}
+}
+
+func Parsecertificate(certificateMsg []byte) CertificateMsg {
+	return CertificateMsg{
+		Msg: certificateMsg,
+	}
+}
+
+func ParsecertificateVerify(certificateVerifyMsg []byte) CertificateVerifyMsg {
+	return CertificateVerifyMsg{
+		Msg: certificateVerifyMsg,
+	}
+}
+
+func ParseFinished(finished []byte) FinishedMsg {
+	return FinishedMsg{
+		Msg: finished,
+	}
 }
 
 func ParseCertificateVerify(certificateVerify []byte) CertificateVerify {

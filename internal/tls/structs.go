@@ -6,6 +6,14 @@ import (
 	"math/big"
 )
 
+type HandshakeMessage interface {
+	HandshakeMsg()
+}
+
+type RecordMessage interface {
+	RecordMsg()
+}
+
 type Key struct {
 	PrivateKey     *ecdh.PrivateKey
 	PublicKey      *ecdh.PublicKey
@@ -21,20 +29,87 @@ type Record struct {
 	Payload       []byte
 }
 
+type Application struct {
+	ContentType      byte
+	Version          []byte
+	Length           []byte
+	EncryptedContent []byte
+}
+
 type Handshake struct {
 	HandshakeType byte
 	Length        uint32
-	Msg           []byte
+	Msg           HandshakeMessage
 }
+
+func (ch ClientHello) HandshakeMsg()          {}
+func (sh ServerHello) HandshakeMsg()          {}
+func (sh EncryptedExtensions) HandshakeMsg()  {}
+func (sh CertificateMsg) HandshakeMsg()       {}
+func (sh CertificateVerifyMsg) HandshakeMsg() {}
+func (sh FinishedMsg) HandshakeMsg()          {}
 
 // Extensionsを []Extensionsの型にして、Toで変換するときに修正
 type ClientHello struct {
 	LegacyVersion            [2]byte
-	Random                   [32]byte //opaque
-	LegacySessionID          [32]byte //opaque
+	Random                   [32]byte
+	LegacySessionID          [32]byte
 	CipherSuites             []byte
-	LegacyCompressionMethods []byte // opaque
-	Extensions               []byte
+	LegacyCompressionMethods []byte
+	Extensions               ClientHelloExtensionType
+}
+
+type ServerHello struct {
+	ContentType       []byte
+	Length            []byte
+	Version           []byte
+	Random            []byte
+	SessionIDLength   byte
+	SessionID         []byte
+	CipherSuite       []byte
+	CompressionMethod byte
+	ExtensionLength   []byte
+	TLSExtensions     []TLSExtensions
+}
+
+type EncryptedExtensions struct {
+	Msg []byte
+}
+
+type CertificateMsg struct {
+	Msg []byte
+}
+
+type CertificateVerifyMsg struct {
+	Msg []byte
+}
+
+type FinishedMsg struct {
+	Msg []byte
+}
+
+type Certificate struct {
+	CertificateRequestContextLength uint8
+	CertificateRequestContext       []byte
+	CertificateListLength           uint
+	CertificateList                 []CertificateEntry
+}
+
+type CertificateEntry struct {
+	CertDataLength  uint //uin24
+	CertData        []byte
+	ExtensionLength []byte
+	Extensions      []Extension // uint16
+}
+
+type CertificateVerify struct {
+	SignatureScheme []byte
+	SignatureLength uint16
+	Signature       []byte
+}
+
+type Finished struct {
+	VerifyData []byte
 }
 
 type ClientHelloExtensionType struct {
@@ -69,19 +144,6 @@ type KeyShareList struct {
 	KeyExchange       []byte
 }
 
-type ServerHello struct {
-	ContentType       []byte
-	Length            []byte
-	Version           []byte
-	Random            []byte
-	SessionIDLength   byte
-	SessionID         []byte
-	CipherSuite       []byte
-	CompressionMethod byte
-	ExtensionLength   []byte
-	TLSExtensions     []TLSExtensions
-}
-
 type TLSExtensions struct {
 	Type   []byte
 	Length []byte
@@ -93,37 +155,6 @@ type CipherSuite struct {
 	KeyLength string
 	Mode      string
 	Hash      string
-}
-
-type ApplicationData struct {
-	ContentType      byte
-	Version          []byte
-	Length           []byte
-	EncryptedContent []byte
-}
-
-type Certificate struct {
-	CertificateRequestContextLength uint8
-	CertificateRequestContext       []byte
-	CertificateListLength           uint
-	CertificateList                 []CertificateEntry
-}
-
-type CertificateEntry struct {
-	CertDataLength  uint //uin24
-	CertData        []byte
-	ExtensionLength []byte
-	Extensions      []Extension // uint16
-}
-
-type CertificateVerify struct {
-	SignatureScheme []byte
-	SignatureLength uint16
-	Signature       []byte
-}
-
-type Finished struct {
-	VerifyData []byte
 }
 
 type HkdfLabel struct {

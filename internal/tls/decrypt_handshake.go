@@ -8,7 +8,7 @@ import (
 )
 
 func DecryptHandshakeFactory(packet []byte, secretkey SecretKey) ([]byte, error) {
-	applicationData := ApplicationData{
+	applicationData := Application{
 		ContentType:      packet[0],
 		Version:          packet[1:3],
 		Length:           packet[3:5],
@@ -52,7 +52,7 @@ func DecryptApplicationFactory(packet []byte, secretkey SecretKey, serverApplica
 	i := 0
 
 	for startPacket < lenPacket {
-		applicationData := ApplicationData{
+		applicationData := Application{
 			ContentType: packet[startPacket],
 			Version:     packet[startPacket+1 : startPacket+3],
 			Length:      packet[startPacket+3 : startPacket+5],

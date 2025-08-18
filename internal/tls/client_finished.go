@@ -26,19 +26,21 @@ func ClientFinishedFactory(transcriptHash []byte, secretKey SecretKey) []byte {
 }
 
 func ClientFinishedRecord(cipherText []byte) Record {
+	payload := ParseA(cipherText)
 	return Record{
 		ContentType:   byte(common.Application),
 		LegacyVersion: [2]byte{0x03, 0x03},
 		Length:        uint16((len(cipherText))),
-		Payload:       cipherText,
+		Payload:       payload,
 	}
 }
 
 func ClientFinishedHandshake(hmac []byte) Handshake {
 	msg := hmac
+	finished := ParseFinished(msg)
 	return Handshake{
 		HandshakeType: byte(common.Finished),
 		Length:        uint32((len(msg))),
-		Msg:           msg,
+		Msg:           finished,
 	}
 }

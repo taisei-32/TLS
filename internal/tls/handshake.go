@@ -6,13 +6,14 @@ import (
 	"github.com/taisei-32/TLS/internal/tls/common"
 )
 
-func HandshakeFactory(handshakeBytes []byte) {
+func HandshakeFactory(handshakeBytes []byte) (){
 	handshake := ParseHandshake(handshakeBytes)
 	switch handshake.HandshakeType {
 	case byte(common.ClientHello):
 		fmt.Println("ClientHello")
 	case byte(common.ServerHello):
-		fmt.Println("ServerHell")
+		fmt.Println("ServerHello")
+		// return serverHelloFactory(handshakeBytes)
 	case byte(common.EndOfEarlyData):
 		fmt.Println("EndOfEarlyData")
 	case byte(common.EncryptedExtensions):

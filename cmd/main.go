@@ -66,6 +66,8 @@ func main() {
 	// fmt.Println("Received response length:", n)
 	// fmt.Println("Received response:", response[:responseLength])
 
+	// serverHello := tls.RecordFactory(response)
+
 	length := response[4]
 	fmt.Println("response", response[4])
 	fmt.Println("response", response)
