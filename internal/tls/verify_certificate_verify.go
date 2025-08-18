@@ -21,7 +21,7 @@ func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, 
 	text = append(text, transcriptHash...)
 
 	cert, _ := x509.ParseCertificate(certData)
-	fmt.Println("cert", cert)
+	// fmt.Println("cert", cert)
 	certAlgorithm := cert.SignatureAlgorithm.String()
 	var hashAlgorithm string
 	if strings.Split(certAlgorithm, "-")[0] == "SHA256" || strings.Split(certAlgorithm, "-")[0] == "SHA3384" {
@@ -33,16 +33,10 @@ func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, 
 
 	switch pub := cert.PublicKey.(type) {
 	case *ecdsa.PublicKey:
+		print("ECDSA")
 		publicKey := cert.PublicKey.(*ecdsa.PublicKey)
-
-		fmt.Printf("DEBUG: Public Key Curve: %s\n", publicKey.Curve.Params().Name)
 		var sig RawSignature
 		asn1.Unmarshal(certificateVerifyRaw.Signature, &sig)
-		fmt.Printf("DEBUG: Raw Signature from Server: %x\n", certificateVerifyRaw.Signature)
-
-		fmt.Printf("DEBUG: Parsed R: %x\n", sig.R.Bytes())
-		fmt.Printf("DEBUG: Parsed S: %x\n", sig.S.Bytes())
-
 		isValid := ecdsa.Verify(publicKey, hashToVerify[:], sig.R, sig.S)
 		if !isValid {
 			panic("signature was not verified")

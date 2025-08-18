@@ -20,7 +20,7 @@ func main() {
 	}
 
 	// conn, err := tcp.Conn("portfolio.malsuke.dev:443")
-	servername := "www.itotai.com"
+	servername := "www.city.kumamoto.jp"
 	url := servername + ":443"
 	fmt.Println("hostname: ", url)
 	conn, err := tcp.Conn(url)
@@ -52,22 +52,9 @@ func main() {
 		panic("Failed to read response: " + err.Error())
 	}
 
-	// response, responseLength := tls.GetResponse(conn)
-
-	// fmt.Println("length:", responseLength)
-	// fmt.Println("Totale Received response:", response[:responseLength])
-
-	// response1 := make([]byte, 4096)
-	// n, err := conn.Read(response1)
-	// if err != nil {
-	// 	panic("Failed to read response: " + err.Error())
-	// }
-
-	// fmt.Println("Received response length:", n)
-	// fmt.Println("Received response:", response[:responseLength])
-
 	length := response[4]
-	fmt.Println("response", response[4])
+	fmt.Println("response length", response[4])
+	fmt.Println("Received response:", response[:responseLength])
 	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
 	// serverHelloRaw := tls.ToSeverHelloByteArr(serverHello)
 	fmt.Println("serverHello", serverHello)
@@ -129,7 +116,7 @@ func main() {
 	// changeCipherSpecRaw := tls.GenChangeCipherSpec()
 	// finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientApplicationKey, hashFunc)
 	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientsecretkey.CipherSuite)
-	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey, clientsecretkey.CipherSuite)
+	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey, clientsecretkey.CipherSuite, servername)
 	// request := append(finishedMessage, applicationMessage...)
 
 	// changeCipherSpecRaw = append(changeCipherSpecRaw, cipherText...)

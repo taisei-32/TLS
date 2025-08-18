@@ -102,7 +102,7 @@ func DecryptApplicationFactory(packet []byte, secretkey SecretKey, serverApplica
 
 		plaintext = append(plaintext, plaintexttmp...)
 		startPacket = end
-		if i == 2 || i == 1 {
+		if i == 0 || i == 1 || i == 2 {
 			fmt.Println(string(plaintexttmp))
 		}
 		i++
