@@ -70,6 +70,7 @@ func main() {
 	fmt.Println("response", response[4])
 	serverHello, _ := tls.ServerHelloFactory(response[5 : 5+length])
 	// serverHelloRaw := tls.ToSeverHelloByteArr(serverHello)
+	fmt.Println("serverHello", serverHello)
 	serverHelloRaw := response[5 : 5+length]
 	severhellokeyshare := serverHello.TLSExtensions[0].Value.(map[string]interface{})
 	parseCipherSuite := tls.ParseCipherSuite(serverHello.CipherSuite)
@@ -106,7 +107,7 @@ func main() {
 	// fmt.Println("clientSecretState:", clientsecretkey)
 	// fmt.Println("encryptedMessage:", encryptedMessage)
 
-	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey)
+	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey, serverHello.CipherSuite)
 	// fmt.Println("plaintext:", rawtext)
 
 	// handshakeをみて分ける関数が欲しい
@@ -124,8 +125,8 @@ func main() {
 	clientApplicationKey, serverAppplicaionKey := tls.GenKeyMasterSecret(clientsecretkey.MasterSecret, hashFunc, transscipthashfinished)
 	// changeCipherSpecRaw := tls.GenChangeCipherSpec()
 	// finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientApplicationKey, hashFunc)
-	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey)
-	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey)
+	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, serverHello.CipherSuite)
+	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey, serverHello.CipherSuite)
 	// request := append(finishedMessage, applicationMessage...)
 
 	// changeCipherSpecRaw = append(changeCipherSpecRaw, cipherText...)
@@ -151,7 +152,7 @@ func main() {
 
 	encryptedMessage = response[:responseLength]
 	fmt.Println("encryptedMessage:", encryptedMessage)
-	decryptedMessage, err := tls.DecryptApplicationFactory(encryptedMessage, clientsecretkey, serverAppplicaionKey)
+	decryptedMessage, err := tls.DecryptApplicationFactory(encryptedMessage, clientsecretkey, serverAppplicaionKey, serverHello.CipherSuite)
 	fmt.Println("decryptedMessage:", decryptedMessage)
 
 }

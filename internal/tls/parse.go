@@ -1,6 +1,8 @@
 package tls
 
 import (
+	"fmt"
+
 	"github.com/taisei-32/TLS/internal/tls/common"
 )
 
@@ -95,15 +97,26 @@ func ParseServerHelloExtension(extension []byte) []TLSExtensions {
 }
 
 func ParseCipherSuite(cipherSuite []byte) CipherSuite {
-	// if cipherSuite[1] == byte{1} {
-	// 	return
-	// }
-	// parts := strings.Split(string(cipherSuite), "_")
-	return CipherSuite{
-		Algorithm: "AES",
-		KeyLength: "128",
-		Mode:      "GCM",
-		Hash:      "SHA256",
+	switch BytesToUint16(cipherSuite) {
+	case uint16(common.TLS_AES_128_GCM_SHA256):
+		fmt.Println("cipherSuite", "TLS_AES_128_GCM_SHA256")
+		return CipherSuite{
+			Algorithm: "AES",
+			KeyLength: "128",
+			Mode:      "GCM",
+			Hash:      "SHA256",
+		}
+	case uint16(common.TLS_CHACHA20_POLY1305_SHA256):
+		fmt.Println("cipherSuite", "TLS_AES_128_GCM_SHA256")
+		return CipherSuite{
+			Algorithm: "CHACHA20",
+			Mode:      "POLY1305",
+			Hash:      "SHA256",
+		}
+	default:
+		return CipherSuite{
+			Algorithm: "error",
+		}
 	}
 }
 

@@ -15,13 +15,13 @@ var data = []byte(fmt.Sprintf(
 	serverName,
 ))
 
-func ApplicationFactory(secretKey SecretKey, clientApplicationKey []byte) []byte {
-	return ToRecordByteArr(ApplicationRecordFactory(secretKey, clientApplicationKey))
+func ApplicationFactory(secretKey SecretKey, clientApplicationKey []byte, cipherSuite []byte) []byte {
+	return ToRecordByteArr(ApplicationRecordFactory(secretKey, clientApplicationKey, cipherSuite))
 }
 
-func ApplicationRecordFactory(secretKey SecretKey, clientApplicationKey []byte) Record {
+func ApplicationRecordFactory(secretKey SecretKey, clientApplicationKey []byte, cipherSuite []byte) Record {
 	data = append(data, []byte{byte(common.Application)}...)
-	encryptedData := GenEncrypted(data, clientApplicationKey, secretKey.Hash)
+	encryptedData := GenEncrypted(data, clientApplicationKey, secretKey.Hash, cipherSuite)
 	return Record{
 		ContentType:   []byte{byte(common.Application)},
 		LegacyVersion: []byte{0x03, 0x03},
