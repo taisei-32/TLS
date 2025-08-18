@@ -47,9 +47,11 @@ func DecryptHandshakeFactory(packet []byte, secretkey SecretKey, cipherSuite []b
 	var plaintext []byte
 	switch BytesToUint16(cipherSuite) {
 	case uint16(common.TLS_AES_128_GCM_SHA256):
-		plaintext = DecryptAESGCM(secretkey.ServerHandshakeTrafficSecret, secretkey, recordHeader, applicationData)
+		plaintext = DecryptAES128GCM(secretkey.ServerHandshakeTrafficSecret, secretkey, recordHeader, applicationData, 0)
+	case uint16(common.TLS_AES_256_GCM_SHA384):
+		plaintext = DecryptAES256GCM(secretkey.ServerHandshakeTrafficSecret, secretkey, recordHeader, applicationData, 0)
 	case uint16(common.TLS_CHACHA20_POLY1305_SHA256):
-		plaintext = DecryptChaChaPoly(secretkey.ServerHandshakeTrafficSecret, secretkey, recordHeader, applicationData)
+		plaintext = DecryptChaChaPoly(secretkey.ServerHandshakeTrafficSecret, secretkey, recordHeader, applicationData, 0)
 	}
 	return plaintext, nil
 }
@@ -58,8 +60,11 @@ func DecryptApplicationFactory(packet []byte, secretkey SecretKey, serverApplica
 	lenPacket := len(packet)
 	startPacket := 0
 	var plaintext []byte
-	// recordIndex := uint64(0)
-	// i := 0
+	var plaintexttmp []byte
+	recordIndex := uint64(0)
+	i := 0
+
+	fmt.Println("cipher:", cipherSuite)
 
 	for startPacket < lenPacket {
 		applicationData := ApplicationData{
@@ -76,7 +81,8 @@ func DecryptApplicationFactory(packet []byte, secretkey SecretKey, serverApplica
 		fmt.Println("ContentType:", applicationData.ContentType)
 		fmt.Println("Version:", applicationData.Version)
 		fmt.Println("Length:", applicationData.Length)
-		fmt.Println("EnryptedContent:", applicationData.EncryptedContent)
+		// fmt.Println("EnryptedContent:", applicationData.EncryptedContent)
+		fmt.Println("i:", i)
 
 		// const (
 		// 	KeyLen = 16
@@ -90,9 +96,11 @@ func DecryptApplicationFactory(packet []byte, secretkey SecretKey, serverApplica
 		recordHeader = append(recordHeader, applicationData.Length...)
 		switch BytesToUint16(cipherSuite) {
 		case uint16(common.TLS_AES_128_GCM_SHA256):
-			plaintext = DecryptAESGCM(serverApplicationKey, secretkey, recordHeader, applicationData)
+			plaintexttmp = DecryptAES128GCM(serverApplicationKey, secretkey, recordHeader, applicationData, i)
+		case uint16(common.TLS_AES_256_GCM_SHA384):
+			plaintexttmp = DecryptAES256GCM(serverApplicationKey, secretkey, recordHeader, applicationData, i)
 		case uint16(common.TLS_CHACHA20_POLY1305_SHA256):
-			plaintext = DecryptChaChaPoly(serverApplicationKey, secretkey, recordHeader, applicationData)
+			plaintexttmp = DecryptChaChaPoly(serverApplicationKey, secretkey, recordHeader, applicationData, i)
 		}
 
 		// block, err := aes.NewCipher(key)
@@ -105,24 +113,24 @@ func DecryptApplicationFactory(packet []byte, secretkey SecretKey, serverApplica
 		// }
 
 		// nonce := xorNonce(iv, recordIndex)
-		// recordIndex++
+		recordIndex++
 
 		// plaintexttmp, err := aesgcm.Open(nil, nonce, applicationData.EncryptedContent, recordHeader)
 		// if err != nil {
 		// 	panic("Decrypted error")
 		// }
 		// fmt.Println("plainteTmp:", plaintexttmp)
-		// plaintext = append(plaintext, plaintexttmp...)
+		plaintext = append(plaintext, plaintexttmp...)
 		startPacket = end
-		// if i == 2 || i == 1 {
-		// 	fmt.Println(string(plaintexttmp))
-		// }
-		// i++
+		if i == 2 || i == 1 {
+			fmt.Println(string(plaintexttmp))
+		}
+		i++
 	}
 	return plaintext, nil
 }
 
-func DecryptAESGCM(decryptedkey []byte, secretkey SecretKey, recordHeader []byte, applicationData ApplicationData) []byte {
+func DecryptAES128GCM(decryptedkey []byte, secretkey SecretKey, recordHeader []byte, applicationData ApplicationData, seq int) []byte {
 	const (
 		KeyLen = 16
 		IvLen  = 12
@@ -137,7 +145,7 @@ func DecryptAESGCM(decryptedkey []byte, secretkey SecretKey, recordHeader []byte
 	if err != nil {
 		panic("Generate error GCM")
 	}
-	nonce := xorNonce(iv, 0)
+	nonce := xorNonce(iv, uint64(seq))
 
 	plaintext, err := aesgcm.Open(nil, nonce, applicationData.EncryptedContent, recordHeader)
 	if err != nil {
@@ -146,7 +154,31 @@ func DecryptAESGCM(decryptedkey []byte, secretkey SecretKey, recordHeader []byte
 	return plaintext
 }
 
-func DecryptChaChaPoly(decryptedkey []byte, secretkey SecretKey, recordHeader []byte, applicationData ApplicationData) []byte {
+func DecryptAES256GCM(decryptedkey []byte, secretkey SecretKey, recordHeader []byte, applicationData ApplicationData, seq int) []byte {
+	const (
+		KeyLen = 32
+		IvLen  = 12
+	)
+	key := HKDFExpandLabel(decryptedkey, "key", nil, KeyLen, secretkey.Hash)
+	iv := HKDFExpandLabel(decryptedkey, "iv", nil, IvLen, secretkey.Hash)
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic("generate error AES")
+	}
+	aesgcm, err := cipher.NewGCM(block)
+	if err != nil {
+		panic("Generate error GCM")
+	}
+	nonce := xorNonce(iv, uint64(seq))
+
+	plaintext, err := aesgcm.Open(nil, nonce, applicationData.EncryptedContent, recordHeader)
+	if err != nil {
+		panic("Decrypted error")
+	}
+	return plaintext
+}
+
+func DecryptChaChaPoly(decryptedkey []byte, secretkey SecretKey, recordHeader []byte, applicationData ApplicationData, seq int) []byte {
 	const (
 		KeyLen = 32
 		IvLen  = 12
@@ -158,7 +190,7 @@ func DecryptChaChaPoly(decryptedkey []byte, secretkey SecretKey, recordHeader []
 		panic("generate error AES")
 	}
 
-	nonce := xorNonce(iv, 0)
+	nonce := xorNonce(iv, uint64(seq))
 	plaintext, err := aead.Open(nil, nonce, applicationData.EncryptedContent, recordHeader)
 	if err != nil {
 		panic("Decrypted error")

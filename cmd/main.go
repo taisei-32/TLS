@@ -106,8 +106,12 @@ func main() {
 
 	// fmt.Println("clientSecretState:", clientsecretkey)
 	// fmt.Println("encryptedMessage:", encryptedMessage)
+	copyCipherSuite := make([]byte, len(serverHello.CipherSuite))
+	copy(copyCipherSuite, serverHello.CipherSuite)
+	clientsecretkey.CipherSuite = copyCipherSuite
+	fmt.Println("clientsecretkey CipherSuite:", clientsecretkey.CipherSuite)
 
-	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey, serverHello.CipherSuite)
+	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey, clientsecretkey.CipherSuite)
 	// fmt.Println("plaintext:", rawtext)
 
 	// handshakeをみて分ける関数が欲しい
@@ -125,8 +129,8 @@ func main() {
 	clientApplicationKey, serverAppplicaionKey := tls.GenKeyMasterSecret(clientsecretkey.MasterSecret, hashFunc, transscipthashfinished)
 	// changeCipherSpecRaw := tls.GenChangeCipherSpec()
 	// finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientApplicationKey, hashFunc)
-	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, serverHello.CipherSuite)
-	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey, serverHello.CipherSuite)
+	finishedMessage := tls.ClientFinishedFactory(transscipthashfinished, clientsecretkey, clientsecretkey.CipherSuite)
+	applicationMessage := tls.ApplicationFactory(clientsecretkey, clientApplicationKey, clientsecretkey.CipherSuite)
 	// request := append(finishedMessage, applicationMessage...)
 
 	// changeCipherSpecRaw = append(changeCipherSpecRaw, cipherText...)
@@ -141,18 +145,17 @@ func main() {
 	}
 
 	fmt.Println("changeCipherSpecRaw sent successfully")
-
-	// response, responseLength = tls.GetResponse(conn)
-	// response := make([]byte, 4096)
+	fmt.Println("cipherSuite1:", clientsecretkey.CipherSuite)
 	responseLength, err = conn.Read(response)
+	fmt.Println("cipherSuite2:", clientsecretkey.CipherSuite)
 	if err != nil {
 		panic("Failed to read response: " + err.Error())
 	}
-	fmt.Println("response:", response[:responseLength])
+	// fmt.Println("response:", response[:responseLength])
 
 	encryptedMessage = response[:responseLength]
-	fmt.Println("encryptedMessage:", encryptedMessage)
-	decryptedMessage, err := tls.DecryptApplicationFactory(encryptedMessage, clientsecretkey, serverAppplicaionKey, serverHello.CipherSuite)
+	// fmt.Println("encryptedMessage:", encryptedMessage)
+	decryptedMessage, err := tls.DecryptApplicationFactory(encryptedMessage, clientsecretkey, serverAppplicaionKey, clientsecretkey.CipherSuite)
 	fmt.Println("decryptedMessage:", decryptedMessage)
 
 }

@@ -148,6 +148,7 @@ type SecretKey struct {
 	ServerFinishedKey            []byte
 	ClientFinishedKey            []byte
 	MasterSecret                 []byte
+	CipherSuite                  []byte
 }
 
 type RawSignature struct {

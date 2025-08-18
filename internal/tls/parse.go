@@ -106,6 +106,14 @@ func ParseCipherSuite(cipherSuite []byte) CipherSuite {
 			Mode:      "GCM",
 			Hash:      "SHA256",
 		}
+	case uint16(common.TLS_AES_256_GCM_SHA384):
+		fmt.Println("cipherSuite", "TLS_AES_256_GCM_SHA384")
+		return CipherSuite{
+			Algorithm: "AES",
+			KeyLength: "256",
+			Mode:      "GCM",
+			Hash:      "SHA384",
+		}
 	case uint16(common.TLS_CHACHA20_POLY1305_SHA256):
 		fmt.Println("cipherSuite", "TLS_AES_128_GCM_SHA256")
 		return CipherSuite{

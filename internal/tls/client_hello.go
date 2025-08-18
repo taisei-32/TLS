@@ -10,7 +10,7 @@ func ClientHelloFactory(servername string, publickey *ecdh.PublicKey) ClientHell
 	ExtensionsData := ToClientHelloExtensionTypeByteArr(ClientHelloExtensionFactory(publickey.Bytes(), servername))
 	var ciphereSuite []byte
 	ciphereSuite = append(ciphereSuite, Uint16ToBytes(uint16(common.TLS_AES_128_GCM_SHA256))...)
-	// ciphereSuite = append(ciphereSuite, Uint16ToBytes(uint16(common.TLS_AES_256_GCM_SHA384))...)
+	ciphereSuite = append(ciphereSuite, Uint16ToBytes(uint16(common.TLS_AES_256_GCM_SHA384))...)
 	ciphereSuite = append(ciphereSuite, Uint16ToBytes(uint16(common.TLS_CHACHA20_POLY1305_SHA256))...)
 
 	// 値を渡すときにconstから呼び出せたら
