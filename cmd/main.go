@@ -85,7 +85,7 @@ func main() {
 	// fmt.Println("ServerHello Random:", serverHello.Random)
 	// fmt.Println("ServerHello SessionID Length:", serverHello.SessionIDLength)
 	// fmt.Println("ServerHello SessionID:", serverHello.SessionID)
-	fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
+	// fmt.Println("ServerHello CipherSuite:", serverHello.CipherSuite)
 	// fmt.Println("ServerHello CipherSuite:", serverHello.TLSExtensions)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare)
 	// fmt.Println("ServerHello Extensions:", severhellokeyshare["KeyExchange"])
@@ -120,7 +120,7 @@ func main() {
 
 	transscipthashcertificate := tls.GenTransScriptHashCertificate(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, hashFunc)
 
-	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthashcertificate, clientkeyshare.HashAlgorithm, certData)
+	tls.VerifyCertificateVerifyFactory(certificateverify, transscipthashcertificate, certData)
 
 	transscipthashverify := tls.GenTransScriptHashCertificateVerify(clientHelloRaw, serverHelloRaw, encryptedextensions, cetificate, certificateverify, hashFunc)
 	tls.VerifyFinishedFactory(finished, transscipthashverify, clientsecretkey.ServerFinishedKey, hashFunc)
@@ -144,10 +144,7 @@ func main() {
 		panic("Failed to send changeCipherSpecRaw: " + err.Error())
 	}
 
-	fmt.Println("changeCipherSpecRaw sent successfully")
-	fmt.Println("cipherSuite1:", clientsecretkey.CipherSuite)
 	responseLength, err = conn.Read(response)
-	fmt.Println("cipherSuite2:", clientsecretkey.CipherSuite)
 	if err != nil {
 		panic("Failed to read response: " + err.Error())
 	}

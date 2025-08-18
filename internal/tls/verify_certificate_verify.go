@@ -6,9 +6,10 @@ import (
 	"crypto/x509"
 	"encoding/asn1"
 	"fmt"
+	"strings"
 )
 
-func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, hashAlgorithm string, certData []byte) {
+func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, certData []byte) {
 	certificateVerifyRaw := ParseCertificateVerify(handshake.msg)
 
 	var text []byte
@@ -17,10 +18,11 @@ func VerifyCertificateVerifyFactory(handshake Handshake, transcriptHash []byte, 
 	text = append(text, 0x00)
 	text = append(text, transcriptHash...)
 
-	hashToVerify := GenHash(hashAlgorithm, text)
-
 	cert, _ := x509.ParseCertificate(certData)
 	publicKey := cert.PublicKey.(*ecdsa.PublicKey)
+
+	certAlgorithm := cert.SignatureAlgorithm.String()
+	hashToVerify := GenHash(strings.Split(certAlgorithm, "-")[1], text)
 
 	var sig RawSignature
 	asn1.Unmarshal(certificateVerifyRaw.Signature, &sig)
