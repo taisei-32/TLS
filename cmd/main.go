@@ -105,11 +105,10 @@ func main() {
 	clientsecretkey, hashFunc := tls.KeyScheduleFactory(clientkeyshare.HashAlgorithm, clientHelloRaw, serverHelloRaw, clientkeyshare.SharedKey)
 
 	// fmt.Println("clientSecretState:", clientsecretkey)
-	// fmt.Println("encryptedMessage:", encryptedMessage)
+	fmt.Println("encryptedMessage:", encryptedMessage)
 	copyCipherSuite := make([]byte, len(serverHello.CipherSuite))
 	copy(copyCipherSuite, serverHello.CipherSuite)
 	clientsecretkey.CipherSuite = copyCipherSuite
-	fmt.Println("clientsecretkey CipherSuite:", clientsecretkey.CipherSuite)
 
 	rawtext, err := tls.DecryptHandshakeFactory(encryptedMessage, clientsecretkey, clientsecretkey.CipherSuite)
 	// fmt.Println("plaintext:", rawtext)

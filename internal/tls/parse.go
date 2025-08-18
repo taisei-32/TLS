@@ -2,6 +2,7 @@ package tls
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/taisei-32/TLS/internal/tls/common"
 )
@@ -129,14 +130,24 @@ func ParseCipherSuite(cipherSuite []byte) CipherSuite {
 }
 
 func ParseRawData(rawData []byte) (Handshake, Handshake, Handshake, Handshake) {
+	var certificateStart int
+	var certificateVerifyStart int
+	var finishedStart int
+
 	encryptedExtensionsType := rawData[0]
+	// log.Println("encryptedExtensionsType:", encryptedExtensionsType)
 	encryptedExtensionsLength := rawData[1:4]
 	// log.Println("encryptedExtensionsLength:", encryptedExtensionsLength)
 	encryptedExtensionsEnd := 4 + BytesToInt24([3]byte(encryptedExtensionsLength))
 	// log.Println("encryptedExtensionsEnd:", encryptedExtensionsEnd)
 	encryptedExtensionsMsg := rawData[4:encryptedExtensionsEnd]
 	// log.Println("encryptedExtensionsMsg:", encryptedExtensionsMsg)
-	certificateStart := encryptedExtensionsEnd
+
+	if rawData[encryptedExtensionsEnd] == byte(22) {
+		certificateStart = encryptedExtensionsEnd + 1
+	} else {
+		certificateStart = encryptedExtensionsEnd
+	}
 	// log.Println("certificateStart:", certificateStart)
 	certificateType := rawData[certificateStart]
 	// log.Println("certificateType:", certificateType)
@@ -147,12 +158,22 @@ func ParseRawData(rawData []byte) (Handshake, Handshake, Handshake, Handshake) {
 	certificateMsg := rawData[certificateStart+4 : certificateEnd]
 	// log.Println("certificateMsg:", certificateMsg)
 
-	certificateVerifyStart := certificateEnd
+	if rawData[certificateEnd] == byte(22) {
+		certificateVerifyStart = certificateEnd + 1
+	} else {
+		certificateVerifyStart = certificateEnd
+	}
 	certificateVerifyType := rawData[certificateVerifyStart]
 	certificateVerifyLength := rawData[certificateVerifyStart+1 : certificateVerifyStart+4]
 	certificateVerifyEnd := certificateVerifyStart + 4 + BytesToInt24([3]byte(certificateVerifyLength))
 	certificateVerifyMsg := rawData[certificateVerifyStart+4 : certificateVerifyEnd]
-	finishedStart := certificateVerifyEnd
+	log.Println("certificateVerifyMsg:", certificateVerifyMsg)
+
+	if rawData[encryptedExtensionsEnd] == byte(22) {
+		finishedStart = certificateVerifyEnd + 1
+	} else {
+		finishedStart = certificateVerifyEnd
+	}
 	finishedType := rawData[finishedStart]
 	finishedLength := rawData[finishedStart+1 : finishedStart+4]
 	finishedEnd := finishedStart + 4 + BytesToInt24([3]byte(finishedLength))
